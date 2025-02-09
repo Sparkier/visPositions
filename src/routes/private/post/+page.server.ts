@@ -9,9 +9,11 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
 
 	const { data: posts } = await supabase
 		.from('post')
-		.select('*')
+		.select('*, keyword( id, title )')
 		.eq('creator', session.user.email)
 		.order('created_at', { ascending: false });
 
-	return { posts: posts ?? [] };
+	const { data: keywords } = await supabase.from('keyword').select('*');
+
+	return { posts: posts ?? [], keywords: keywords ?? [] };
 };
