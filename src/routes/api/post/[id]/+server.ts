@@ -31,14 +31,47 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 	}
 
 	const data = await request.json();
-	const { error } = await supabase
+
+	// Start a transaction to update both post and keywords
+	const { error: postError } = await supabase
 		.from('post')
-		.update(data)
+		.update({
+			title: data.title,
+			description: data.description,
+			contact: data.contact,
+			industry: data.industry,
+			education: data.education,
+			vetted: data.vetted
+		})
 		.eq('id', params.id)
 		.eq('creator', session.user.email);
 
-	if (error) {
+	if (postError) {
 		throw new Error('Internal Server Error');
+	}
+
+	// Delete existing keyword associations
+	const { error: deleteError } = await supabase
+		.from('postkeyword')
+		.delete()
+		.eq('post_id', params.id);
+
+	if (deleteError) {
+		throw new Error('Internal Server Error');
+	}
+
+	// Insert new keyword associations
+	if (data.keywords.length > 0) {
+		const { error: keywordError } = await supabase.from('postkeyword').insert(
+			data.keywords.map((keyword: string) => ({
+				post_id: params.id,
+				keyword_id: keyword
+			}))
+		);
+
+		if (keywordError) {
+			throw new Error('Internal Server Error');
+		}
 	}
 
 	return new Response('Post updated', { status: 200 });

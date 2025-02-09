@@ -1,8 +1,18 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import type { Post } from '$lib/types';
-	import { ExternalLink, Pencil, Trash } from 'lucide-svelte';
-	import Button from './Button.svelte';
+	import { Education, educationMap, type Post } from '$lib/types';
+	import {
+		BookOpen,
+		CircleOff,
+		ExternalLink,
+		Factory,
+		GraduationCap,
+		Pencil,
+		PencilLine,
+		School,
+		Trash
+	} from 'lucide-svelte';
+	import Button from './ui/Button.svelte';
 
 	let {
 		post,
@@ -54,4 +64,33 @@
 	</div>
 	<p>Posted on {new Date(post.created_at).toLocaleDateString()}</p>
 	<p class="text-justify">{post.description}</p>
+	<div class="flex items-center gap-6">
+		<div class="flex items-center gap-1 text-gray-500">
+			{#if post.industry}
+				<Factory class="h-4 w-4" />
+			{:else}
+				<School class="h-4 w-4" />
+			{/if}
+			<span class="text-sm text-gray-500">
+				{post.industry ? 'Industry Position' : 'Academic Position'}
+			</span>
+		</div>
+		<div class="flex items-center gap-1 text-gray-500">
+			{#if post.education === Education.None}
+				<CircleOff class="h-4 w-4" />
+			{:else if post.education === Education.Undergraduate}
+				<PencilLine class="h-4 w-4" />
+			{:else if post.education === Education.Graduate}
+				<BookOpen class="h-4 w-4" />
+			{:else if post.education === Education.PhD}
+				<GraduationCap class="h-4 w-4" />
+			{/if}
+			<span class="text-sm text-gray-500">{educationMap[post.education]}</span>
+		</div>
+		<div class="ml-auto flex items-center gap-1">
+			{#each post.keyword as keyword}
+				<span class="rounded-md bg-gray-100 px-1 text-sm text-gray-500">{keyword.title}</span>
+			{/each}
+		</div>
+	</div>
 </div>
