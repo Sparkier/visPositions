@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { goto, invalidate } from '$app/navigation';
+	import Help from '$lib/components/Help.svelte';
+	import Popup from '$lib/components/ui/Popup.svelte';
 	import { HelpCircle, Plus } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import '../app.css';
 
 	let { data, children } = $props();
+
+	let helpPopup = $state(false);
+
 	let { session, supabase } = $derived(data);
 
 	onMount(() => {
@@ -18,6 +23,12 @@
 	});
 </script>
 
+{#if helpPopup}
+	<Popup onclose={() => (helpPopup = false)} class="max-w-[800px]">
+		<Help />
+	</Popup>
+{/if}
+
 <div class="flex h-full flex-col">
 	<header class="flex items-center justify-between bg-primary p-4 text-white">
 		<button
@@ -30,7 +41,9 @@
 		</button>
 		<nav class="flex items-center gap-2">
 			<a href="/private/post" class="transition-colors hover:text-accent"><Plus /></a>
-			<button class="transition-colors hover:text-accent"><HelpCircle /></button>
+			<button class="transition-colors hover:text-accent" onclick={() => (helpPopup = true)}
+				><HelpCircle /></button
+			>
 		</nav>
 	</header>
 	<main class="flex min-h-0 grow flex-col gap-2 bg-slate-50 p-2">
