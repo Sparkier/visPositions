@@ -15,4 +15,7 @@
 	h4 {
 		@apply font-semibold;
 	}
+	.link {
+		@apply text-primary underline;
+	}
 }
