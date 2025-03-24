@@ -12,7 +12,7 @@ export async function POST({ request }) {
 			from: 'info@vispositions.com',
 			to: 'alex@a13x.io',
 			subject: 'New Post Submitted',
-			text: `A new post was submitted: \n\nTitle: ${payload.title}\n\nContent: ${payload.content}`
+			text: `A new post was submitted: \n\nTitle: ${payload.title}\n\nContent: ${payload.description}`
 		});
 
 		return json({ success: true });
