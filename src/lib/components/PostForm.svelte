@@ -15,6 +15,7 @@
 	let industry = $state(false);
 	let education = $state<string | undefined>(undefined);
 	let keywords = $state<number[]>([]);
+	let expiration_date = $state('');
 
 	$effect(() => {
 		title = editing?.title || '';
@@ -23,12 +24,31 @@
 		industry = editing?.industry || false;
 		education = editing?.education || undefined;
 		keywords = editing?.keyword.map((keyword) => keyword.id) || [];
+
+		// Format the expiration date for the date input if it exists
+		if (editing?.expiration_date) {
+			// Convert ISO string to YYYY-MM-DD format for date input
+			expiration_date = new Date(editing.expiration_date).toISOString().split('T')[0];
+		} else {
+			// Default to 3 months from now for new posts
+			const defaultDate = new Date();
+			defaultDate.setMonth(defaultDate.getMonth() + 3);
+			expiration_date = defaultDate.toISOString().split('T')[0];
+		}
 	});
 
 	async function addPost() {
 		await fetch('/api/post', {
 			method: 'POST',
-			body: JSON.stringify({ title, description, contact, industry, education, keywords })
+			body: JSON.stringify({
+				title,
+				description,
+				contact,
+				industry,
+				education,
+				keywords,
+				expiration_date: new Date(expiration_date).toISOString()
+			})
 		});
 		title = '';
 		description = '';
@@ -46,7 +66,8 @@
 				industry,
 				education,
 				keywords,
-				vetted: false
+				vetted: false,
+				expiration_date: new Date(expiration_date).toISOString()
 			})
 		});
 		updated();
@@ -90,10 +111,21 @@
 			class="w-1/2"
 		/>
 	</div>
-	<div class="flex justify-end gap-6">
+	<div class="flex items-center justify-end gap-4">
+		<div class="flex items-center gap-2">
+			<label for="expiration_date" class="text-sm text-gray-600">Expires on:</label>
+			<Input
+				name="expiration_date"
+				placeholder="Expiration date"
+				type="date"
+				bind:value={expiration_date}
+			/>
+		</div>
 		<Toggle label="Industry Position" bind:checked={industry} />
+	</div>
+	<div class="flex justify-end gap-6">
 		<Button
-			disabled={!title || !description || !contact || !education}
+			disabled={!title || !description || !contact || !education || !expiration_date}
 			onclick={() => {
 				editing ? updatePost() : addPost();
 			}}

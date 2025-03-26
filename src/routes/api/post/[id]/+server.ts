@@ -33,16 +33,20 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 	const data = await request.json();
 
 	// Start a transaction to update both post and keywords
+	// Always include expiration_date in the update
+	const updateData = {
+		title: data.title,
+		description: data.description,
+		contact: data.contact,
+		industry: data.industry,
+		education: data.education,
+		vetted: data.vetted,
+		expiration_date: data.expiration_date
+	};
+
 	const { error: postError } = await supabase
 		.from('post')
-		.update({
-			title: data.title,
-			description: data.description,
-			contact: data.contact,
-			industry: data.industry,
-			education: data.education,
-			vetted: data.vetted
-		})
+		.update(updateData)
 		.eq('id', params.id)
 		.eq('creator', session.user.email);
 

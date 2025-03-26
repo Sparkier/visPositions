@@ -40,8 +40,8 @@
 			<h1>visPositions</h1>
 		</button>
 		<nav class="flex items-center gap-2">
-			<a href="/private/post" class="transition-colors hover:text-accent"><Plus /></a>
-			<button class="transition-colors hover:text-accent" onclick={() => (helpPopup = true)}
+			<a href="/private/post" class="transition-all hover:text-accent"><Plus /></a>
+			<button class="transition-all hover:text-accent" onclick={() => (helpPopup = true)}
 				><HelpCircle /></button
 			>
 		</nav>

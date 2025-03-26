@@ -5,7 +5,17 @@ export const POST = async ({ locals: { supabase, safeGetSession }, request }) =>
 		throw new Error('Unauthorized');
 	}
 
-	const { title, description, contact, industry, education, keywords } = await request.json();
+	const { title, description, contact, industry, education, keywords, expiration_date } =
+		await request.json();
+
+	// Use provided expiration date or calculate default (3 months from now)
+	const finalExpirationDate =
+		expiration_date ||
+		(() => {
+			const defaultDate = new Date();
+			defaultDate.setMonth(defaultDate.getMonth() + 3);
+			return defaultDate.toISOString();
+		})();
 
 	const { data, error } = await supabase
 		.from('post')
@@ -16,7 +26,8 @@ export const POST = async ({ locals: { supabase, safeGetSession }, request }) =>
 			industry,
 			education,
 			creator: session.user.email,
-			created_at: new Date().toISOString()
+			created_at: new Date().toISOString(),
+			expiration_date: finalExpirationDate
 		})
 		.select();
 

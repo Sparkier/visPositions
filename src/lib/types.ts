@@ -8,6 +8,7 @@ export type Post = {
 	industry: boolean;
 	education: Education;
 	keyword: Keyword[];
+	expiration_date: string;
 };
 
 export enum Education {
