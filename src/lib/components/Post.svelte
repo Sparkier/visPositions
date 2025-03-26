@@ -90,19 +90,23 @@
 				<span class="text-sm text-gray-500">{educationMap[post.education]}</span>
 			</div>
 		</div>
-		<div class="flex items-center gap-1">
-			<div class="flex items-center gap-4 pr-4 text-xs text-gray-500">
+		<div class="flex items-center gap-4">
+			<div class="flex items-center gap-4 text-xs text-gray-500">
 				<p>Posted: {new Date(post.created_at).toLocaleDateString()}</p>
 				<p>
 					{new Date(post.expiration_date) < new Date() ? 'Expired:' : 'Expires:'}
 					{new Date(post.expiration_date).toLocaleDateString()}
 				</p>
 			</div>
-			{#each post.keyword as keyword}
-				<span class="rounded-md border-2 border-accent/50 bg-gray-50 px-1 text-xs text-gray-500"
-					>{keyword.title}</span
-				>
-			{/each}
+			{#if post.keyword.length > 0}
+				<div class="flex items-center gap-1">
+					{#each post.keyword as keyword}
+						<span class="rounded-md border-2 border-accent/50 bg-gray-50 px-1 text-xs text-gray-500"
+							>{keyword.title}</span
+						>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>

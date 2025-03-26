@@ -111,18 +111,17 @@
 			class="w-1/2"
 		/>
 	</div>
-	<div class="flex items-center gap-2">
+	<div class="flex items-center justify-end gap-4">
 		<div class="flex items-center gap-2">
 			<label for="expiration_date" class="text-sm text-gray-600">Expires on:</label>
-			<input
+			<Input
+				name="expiration_date"
+				placeholder="Expiration date"
 				type="date"
-				id="expiration_date"
 				bind:value={expiration_date}
-				required
-				class="focus:ring-primary-yellow focus:border-primary-yellow placeholder:text-text-lightest shrink-0 rounded border border-gray-200 px-2 py-1 transition-all disabled:opacity-50"
 			/>
 		</div>
-		<Toggle label="Industry Position" bind:checked={industry} class="ml-auto" />
+		<Toggle label="Industry Position" bind:checked={industry} />
 	</div>
 	<div class="flex justify-end gap-6">
 		<Button
