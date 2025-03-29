@@ -2,7 +2,7 @@
 	import { goto, invalidate } from '$app/navigation';
 	import Help from '$lib/components/Help.svelte';
 	import Popup from '$lib/components/ui/Popup.svelte';
-	import { HelpCircle, Plus } from 'lucide-svelte';
+	import { HelpCircle, Mail, Plus } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import '../app.css';
 
@@ -39,11 +39,16 @@
 		>
 			<h1>visPositions</h1>
 		</button>
-		<nav class="flex items-center gap-2">
-			<a href="/private/post" class="transition-all hover:text-accent"><Plus /></a>
-			<button class="transition-all hover:text-accent" onclick={() => (helpPopup = true)}
-				><HelpCircle /></button
+		<nav class="flex items-center gap-4">
+			<a href="/subscribe" class="transition-all hover:text-accent" title="Subscribe"><Mail /></a>
+			<a href="/private/post" class="transition-all hover:text-accent" title="Add Post"><Plus /></a>
+			<button
+				class="transition-all hover:text-accent"
+				onclick={() => (helpPopup = true)}
+				title="Help"
 			>
+				<HelpCircle />
+			</button>
 		</nav>
 	</header>
 	<main class="flex min-h-0 grow flex-col gap-2 bg-slate-50 p-2">
