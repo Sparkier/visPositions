@@ -40,8 +40,12 @@
 			<h1>visPositions</h1>
 		</button>
 		<nav class="flex items-center gap-4">
-			<a href="/subscribe" class="transition-all hover:text-accent" title="Subscribe"><Mail /></a>
-			<a href="/private/post" class="transition-all hover:text-accent" title="Add Post"><Plus /></a>
+			<a href="newsletter/subscribe" class="transition-all hover:text-accent" title="Subscribe">
+				<Mail />
+			</a>
+			<a href="/private/post" class="transition-all hover:text-accent" title="Add Post">
+				<Plus />
+			</a>
 			<button
 				class="transition-all hover:text-accent"
 				onclick={() => (helpPopup = true)}

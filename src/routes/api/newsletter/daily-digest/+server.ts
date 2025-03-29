@@ -48,40 +48,67 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 			return json({ message: 'No subscribers to send to.' }, { status: 200 });
 		}
 
-		const emails = subscribers.map((sub) => sub.email);
-
-		// Compose Email Content
 		const siteUrl = 'https://vispositions.com';
 		const subject = `Daily Digest: ${posts.length} New Position${posts.length > 1 ? 's' : ''} Posted`;
 
-		let textBody = `Here were some new positions posted on visPositions in the last 24 hours:\n\n`;
-		let htmlBody = `<p>Here were some new positions posted on <a href="${siteUrl}">visPositions</a> in the last 24 hours:</p><ul>`;
+		// Common email body parts
+		const textBodyHeader = `Here are the new positions posted on vispositions in the last 24 hours:\n\n`;
+		const htmlBodyHeader = `<p>Here are the new positions posted on <a href="${siteUrl}">visPositions</a> in the last 24 hours:</p><ul>`;
+		let postsText = '';
+		let postsHtml = '';
 
 		posts.forEach((post) => {
-			textBody += `- ${post.title}\n   ${post.description?.substring(0, 100)}...`;
-			htmlBody += `<li><a href="${siteUrl}"><strong>${post.title}</strong></a><br/>${post.description?.substring(0, 100)}...</li>`;
+			const postLink = `${siteUrl}`;
+			postsText += `- ${post.title}\n   ${post.description?.substring(0, 100)}...\n   View: ${postLink}\n\n`;
+			postsHtml += `<li><a href="${postLink}"><strong>${post.title}</strong></a><br/>${post.description?.substring(0, 100)}...</li>`;
 		});
+		postsHtml += `</ul>`;
 
-		htmlBody += `</ul><p>Visit <a href="${siteUrl}">${siteUrl}</a> to see more.</p>`;
-		textBody += `Visit ${siteUrl} to see more.`;
+		let emailsSent = 0;
+		let emailErrors = 0;
 
-		// Send Email
-		try {
-			await resend.emails.send({
-				from: 'info@vispositions.com',
-				to: emails,
-				subject: subject,
-				text: textBody,
-				html: htmlBody
-			});
-			console.log(
-				`Daily digest sent successfully to ${emails.length} subscribers for ${posts.length} posts.`
-			);
-			return json({ success: true, message: `Digest sent to ${emails.length} subscribers.` });
-		} catch (emailError) {
-			console.error('Error sending daily digest email:', emailError);
-			throw new Error('Error sending email');
+		for (const subscriber of subscribers) {
+			const email = subscriber.email;
+			if (!email) continue; // Skip if email is missing for some reason
+
+			// Encode email for the unsubscribe link using Node.js Buffer
+			const encodedEmail = Buffer.from(email).toString('base64');
+			const unsubscribeUrl = `${siteUrl}/api/newsletter/unsubscribe?id=${encodedEmail}`;
+
+			const textBody =
+				`${textBodyHeader}${postsText}` +
+				`Visit ${siteUrl} to see more.\n\n` +
+				`To unsubscribe from these emails, click here: ${unsubscribeUrl}`;
+
+			const htmlBody =
+				`${htmlBodyHeader}${postsHtml}` +
+				`<p>Visit <a href="${siteUrl}">${siteUrl}</a> to see more.</p>` +
+				`<p style="font-size: 0.8em; color: #666;">` +
+				`To unsubscribe, <a href="${unsubscribeUrl}">click here</a>.` +
+				`</p>`;
+
+			try {
+				await resend.emails.send({
+					from: 'info@vispositions.com', // Ensure this is verified in Resend
+					to: email,
+					subject: subject,
+					text: textBody,
+					html: htmlBody
+				});
+				emailsSent++;
+			} catch (emailError) {
+				console.error(`Failed to send email to ${email}:`, emailError);
+				emailErrors++;
+			}
 		}
+
+		console.log(`Daily digest process completed. Sent: ${emailsSent}, Failed: ${emailErrors}`);
+		return json({
+			success: true,
+			message: `Digest processed. Sent: ${emailsSent}, Failed: ${emailErrors}`,
+			emailsSent,
+			emailErrors
+		});
 	} catch (error: unknown) {
 		console.error('Error in daily digest endpoint:', error);
 		throw new Error('Internal Server Error');
