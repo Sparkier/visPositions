@@ -17,7 +17,7 @@ export const POST = async ({ locals: { supabase, safeGetSession }, request }) =>
 			return defaultDate.toISOString();
 		})();
 
-	const { data, error } = await supabase
+	const { data: postData, error: postError } = await supabase
 		.from('post')
 		.insert({
 			title,
@@ -29,23 +29,28 @@ export const POST = async ({ locals: { supabase, safeGetSession }, request }) =>
 			created_at: new Date().toISOString(),
 			expiration_date: finalExpirationDate
 		})
-		.select();
+		.select()
+		.single();
 
-	if (error) {
-		throw new Error('Internal Server Error');
+	if (postError) {
+		throw new Error('Failed to create post.');
+	}
+
+	if (!postData) {
+		throw new Error('Post creation succeeded but no data returned.');
 	}
 
 	// Insert new keyword associations
-	if (keywords.length > 0) {
+	if (keywords && keywords.length > 0) {
 		const { error: keywordError } = await supabase.from('postkeyword').insert(
 			keywords.map((keyword: string) => ({
-				post_id: data[0].id,
+				post_id: postData.id,
 				keyword_id: keyword
 			}))
 		);
 
 		if (keywordError) {
-			throw new Error('Internal Server Error');
+			throw new Error('Failed to associate keywords.');
 		}
 	}
 
