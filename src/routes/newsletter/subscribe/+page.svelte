@@ -42,15 +42,9 @@
 </script>
 
 <div class="container mx-auto max-w-xl p-4">
-	<h1 class="mb-4 text-2xl font-semibold">Subscribe to Newsletter</h1>
-
-	<p class="mb-6 text-gray-600">
-		Enter your email below to receive notifications about newly posted positions.
-	</p>
+	<h1>Subscribe to Newsletter</h1>
+	<p>Enter your email below to receive notifications about newly posted positions.</p>
 	<div class="flex flex-col gap-2">
-		<label for="newsletter-email" class="block text-sm font-medium text-gray-700"
-			>Subscribe to Newsletter</label
-		>
 		<div class="flex space-x-2">
 			<Input bind:value={email} placeholder="your.email@example.com" type="email" />
 			<Button disabled={loading} onclick={handleSubmit}>
