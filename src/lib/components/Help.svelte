@@ -21,10 +21,12 @@
 		<br />
 		<b>2. Information We Collect</b>
 		<br />
-		We collect personal information from you when you choose to log in to our Website. The personal information
-		we collect includes:
+		We collect personal information from you when you choose to log in to our Website or subscribe to
+		the newsletter. The personal information we collect includes:
 		<br />
-		Email address Password
+		Email address and Password for logging in
+		<br />
+		Email address for subscribing to the newsletter
 		<br />
 		<br />
 		<b>3. How We Use Your Information</b>
