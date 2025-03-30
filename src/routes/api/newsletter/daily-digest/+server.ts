@@ -61,13 +61,21 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 			`To unsubscribe, <a href={{{RESEND_UNSUBSCRIBE_URL}}}>click here</a>.` +
 			`</p>`;
 
-		const sendResult = await resend.broadcasts.create({
+		const broadcast = await resend.broadcasts.create({
+			name: `Daily Digest ${new Date().toLocaleDateString()}`,
 			from: 'info@vispositions.com',
 			subject: subject,
 			text: textBody,
 			html: htmlBody,
 			audienceId: RESEND_AUDIENCE_ID
 		});
+
+		if (broadcast.error || !broadcast.data) {
+			console.error('Error creating daily digest broadcast:', broadcast.error);
+			throw new Error('Error creating daily digest broadcast');
+		}
+
+		const sendResult = await resend.broadcasts.send(broadcast.data.id);
 
 		if (sendResult.error) {
 			console.error('Error sending daily digest:', sendResult.error);
