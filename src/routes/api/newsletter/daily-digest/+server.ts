@@ -1,4 +1,4 @@
-import { DAILY_DIGEST_SECRET_KEY, RESEND_API_KEY } from '$env/static/private';
+import { DAILY_DIGEST_SECRET_KEY, RESEND_API_KEY, RESEND_AUDIENCE_ID } from '$env/static/private';
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
 import type { RequestHandler } from './$types';
@@ -18,7 +18,7 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		const twentyFourHoursAgoISO = twentyFourHoursAgo.toISOString();
 		const { data: posts, error: postsError } = await supabase
 			.from('post')
-			.select('id, title, description, created_at') // Select fields needed for the email
+			.select('id, title, description, created_at')
 			.eq('vetted', true)
 			.gte('vetted_at', twentyFourHoursAgoISO)
 			.order('vetted_at', { ascending: false });
@@ -31,21 +31,6 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		if (!posts || posts.length === 0) {
 			console.log('No newly vetted posts found in the last 24 hours.');
 			return json({ message: 'No new posts to send.' }, { status: 200 });
-		}
-
-		// Fetch subscribers
-		const { data: subscribers, error: subscriberError } = await supabase
-			.from('subscribers')
-			.select('email');
-
-		if (subscriberError) {
-			console.error('Error fetching subscribers:', subscriberError);
-			throw new Error('Error fetching subscribers');
-		}
-
-		if (!subscribers || subscribers.length === 0) {
-			console.log('No subscribers found.');
-			return json({ message: 'No subscribers to send to.' }, { status: 200 });
 		}
 
 		const siteUrl = 'https://vispositions.com';
@@ -64,50 +49,35 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		});
 		postsHtml += `</ul>`;
 
-		let emailsSent = 0;
-		let emailErrors = 0;
+		const textBody =
+			`${textBodyHeader}${postsText}` +
+			`Visit ${siteUrl} to see more.\n\n` +
+			`To unsubscribe from these emails, click here: {{{RESEND_UNSUBSCRIBE_URL}}}`;
 
-		for (const subscriber of subscribers) {
-			const email = subscriber.email;
-			if (!email) continue; // Skip if email is missing for some reason
+		const htmlBody =
+			`${htmlBodyHeader}${postsHtml}` +
+			`<p>Visit <a href="${siteUrl}">${siteUrl}</a> to see more.</p>` +
+			`<p style="font-size: 0.8em; color: #666;">` +
+			`To unsubscribe, <a href={{{RESEND_UNSUBSCRIBE_URL}}}>click here</a>.` +
+			`</p>`;
 
-			// Encode email for the unsubscribe link using Node.js Buffer
-			const encodedEmail = Buffer.from(email).toString('base64');
-			const unsubscribeUrl = `${siteUrl}/api/newsletter/unsubscribe?id=${encodedEmail}`;
+		const sendResult = await resend.broadcasts.create({
+			from: 'info@vispositions.com',
+			subject: subject,
+			text: textBody,
+			html: htmlBody,
+			audienceId: RESEND_AUDIENCE_ID
+		});
 
-			const textBody =
-				`${textBodyHeader}${postsText}` +
-				`Visit ${siteUrl} to see more.\n\n` +
-				`To unsubscribe from these emails, click here: ${unsubscribeUrl}`;
-
-			const htmlBody =
-				`${htmlBodyHeader}${postsHtml}` +
-				`<p>Visit <a href="${siteUrl}">${siteUrl}</a> to see more.</p>` +
-				`<p style="font-size: 0.8em; color: #666;">` +
-				`To unsubscribe, <a href="${unsubscribeUrl}">click here</a>.` +
-				`</p>`;
-
-			try {
-				await resend.emails.send({
-					from: 'info@vispositions.com', // Ensure this is verified in Resend
-					to: email,
-					subject: subject,
-					text: textBody,
-					html: htmlBody
-				});
-				emailsSent++;
-			} catch (emailError) {
-				console.error(`Failed to send email to ${email}:`, emailError);
-				emailErrors++;
-			}
+		if (sendResult.error) {
+			console.error('Error sending daily digest:', sendResult.error);
+			throw new Error('Error sending daily digest');
 		}
 
-		console.log(`Daily digest process completed. Sent: ${emailsSent}, Failed: ${emailErrors}`);
+		console.log(`Daily digest process completed.`);
 		return json({
 			success: true,
-			message: `Digest processed. Sent: ${emailsSent}, Failed: ${emailErrors}`,
-			emailsSent,
-			emailErrors
+			message: `Digest processed.`
 		});
 	} catch (error: unknown) {
 		console.error('Error in daily digest endpoint:', error);

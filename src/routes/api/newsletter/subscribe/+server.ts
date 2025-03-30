@@ -1,7 +1,11 @@
+import { RESEND_API_KEY, RESEND_AUDIENCE_ID } from '$env/static/private';
 import { json } from '@sveltejs/kit';
+import { Resend } from 'resend';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ locals: { supabase }, request }) => {
+const resend = new Resend(RESEND_API_KEY);
+
+export const POST: RequestHandler = async ({ request }) => {
 	// Basic email regex for validation
 	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -11,12 +15,12 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		return json({ success: false, message: 'Invalid email address provided.' }, { status: 400 });
 	}
 
-	const { error } = await supabase.from('subscribers').insert({ email: email.toLowerCase() });
+	const subscribeResult = await resend.contacts.create({
+		email: email.toLowerCase(),
+		audienceId: RESEND_AUDIENCE_ID
+	});
 
-	if (error) {
-		if (error.code === '23505') {
-			throw new Error('Email already subscribed.');
-		}
+	if (subscribeResult.error) {
 		throw new Error('Failed to subscribe.');
 	}
 
