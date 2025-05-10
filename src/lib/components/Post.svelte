@@ -3,6 +3,7 @@
 	import { Education, educationMap, type Post } from '$lib/types';
 	import {
 		BookOpen,
+		Check,
 		CircleOff,
 		ExternalLink,
 		Factory,
@@ -18,8 +19,17 @@
 		post,
 		deletable = false,
 		showVetted = false,
-		editClick = () => {}
-	}: { post: Post; deletable?: boolean; showVetted?: boolean; editClick?: () => void } = $props();
+		editClick = () => {},
+		isAdmin = false,
+		approveClick = () => {}
+	}: {
+		post: Post;
+		deletable?: boolean;
+		showVetted?: boolean;
+		editClick?: () => void;
+		isAdmin?: boolean;
+		approveClick?: () => void;
+	} = $props();
 </script>
 
 <div class="flex flex-col gap-2 rounded-md border bg-white p-4 shadow-sm">
@@ -41,6 +51,16 @@
 						<span class="text-sm text-gray-500">
 							This post will be public once it has been vetted.
 						</span>
+					{/if}
+					{#if isAdmin && !post.vetted}
+						<Button
+							onclick={() => {
+								approveClick();
+							}}
+							class="bg-green-500 hover:bg-green-600"
+						>
+							<Check class="h-4 w-4" />
+						</Button>
 					{/if}
 					<Button
 						onclick={() => {
