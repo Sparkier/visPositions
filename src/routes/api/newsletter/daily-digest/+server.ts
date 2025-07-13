@@ -1,4 +1,10 @@
-import { DAILY_DIGEST_SECRET_KEY, RESEND_API_KEY, RESEND_AUDIENCE_ID } from '$env/static/private';
+import {
+	DAILY_DIGEST_SECRET_KEY,
+	LINKEDIN_ACCESS_TOKEN,
+	LINKEDIN_ORGANIZATION_ID,
+	RESEND_API_KEY,
+	RESEND_AUDIENCE_ID
+} from '$env/static/private';
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
 import type { RequestHandler } from './$types';
@@ -40,11 +46,13 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		const textBodyHeader = `Here are the new positions posted on vispositions in the last 24 hours:\n\n`;
 		const htmlBodyHeader = `<p>Here are the new positions posted on <a href="${siteUrl}">visPositions</a> in the last 24 hours:</p><ul>`;
 		let postsText = '';
+		let linkedinText = '';
 		let postsHtml = '';
 
 		posts.forEach((post) => {
 			const postLink = `${siteUrl}`;
 			postsText += `- ${post.title}\n   ${post.description?.substring(0, 100)}...\n   View: ${postLink}\n\n`;
+			linkedinText += `- ${post.title}\n`;
 			postsHtml += `<li><a href="${postLink}"><strong>${post.title}</strong></a><br/>${post.description?.substring(0, 100)}...</li>`;
 		});
 		postsHtml += `</ul>`;
@@ -53,6 +61,8 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 			`${textBodyHeader}${postsText}` +
 			`Visit ${siteUrl} to see more.\n\n` +
 			`To unsubscribe from these emails, click here: {{{RESEND_UNSUBSCRIBE_URL}}}`;
+
+		const linkedInBody = `${textBodyHeader}${linkedinText}\n\nVisit ${siteUrl} to see more.\n\n#job #visualization #dataviz`;
 
 		const htmlBody =
 			`${htmlBodyHeader}${postsHtml}` +
@@ -80,6 +90,34 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		if (sendResult.error) {
 			console.error('Error sending daily digest:', sendResult.error);
 			throw new Error('Error sending daily digest');
+		}
+
+		// Post to LinkedIn
+		if (LINKEDIN_ACCESS_TOKEN && LINKEDIN_ORGANIZATION_ID) {
+			await fetch('https://api.linkedin.com/v2/ugcPosts', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${LINKEDIN_ACCESS_TOKEN}`
+				},
+				body: JSON.stringify({
+					author: `urn:li:organization:${LINKEDIN_ORGANIZATION_ID}`,
+					lifecycleState: 'PUBLISHED',
+					specificContent: {
+						'com.linkedin.ugc.ShareContent': {
+							shareCommentary: {
+								text: `${linkedInBody}`
+							},
+							shareMediaCategory: 'NONE'
+						}
+					},
+					visibility: {
+						'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
+					}
+				})
+			});
+		} else {
+			console.log('LinkedIn API credentials not configured. Skipping post to LinkedIn.');
 		}
 
 		console.log(`Daily digest process completed.`);
