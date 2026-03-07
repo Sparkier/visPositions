@@ -94,28 +94,39 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 
 		// Post to LinkedIn
 		if (LINKEDIN_ACCESS_TOKEN && LINKEDIN_ORGANIZATION_ID) {
-			await fetch('https://api.linkedin.com/v2/ugcPosts', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${LINKEDIN_ACCESS_TOKEN}`
-				},
-				body: JSON.stringify({
-					author: `urn:li:organization:${LINKEDIN_ORGANIZATION_ID}`,
-					lifecycleState: 'PUBLISHED',
-					specificContent: {
-						'com.linkedin.ugc.ShareContent': {
-							shareCommentary: {
-								text: `${linkedInBody}`
-							},
-							shareMediaCategory: 'NONE'
-						}
+			try {
+				const linkedinRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${LINKEDIN_ACCESS_TOKEN}`
 					},
-					visibility: {
-						'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
-					}
-				})
-			});
+					body: JSON.stringify({
+						author: `urn:li:organization:${LINKEDIN_ORGANIZATION_ID}`,
+						lifecycleState: 'PUBLISHED',
+						specificContent: {
+							'com.linkedin.ugc.ShareContent': {
+								shareCommentary: {
+									text: `${linkedInBody}`
+								},
+								shareMediaCategory: 'NONE'
+							}
+						},
+						visibility: {
+							'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
+						}
+					})
+				});
+
+				if (!linkedinRes.ok) {
+					const errorText = await linkedinRes.text();
+					console.error(`Error posting to LinkedIn (${linkedinRes.status}):`, errorText);
+				} else {
+					console.log('Successfully posted daily digest to LinkedIn.');
+				}
+			} catch (err) {
+				console.error('Network error while posting to LinkedIn:', err);
+			}
 		} else {
 			console.log('LinkedIn API credentials not configured. Skipping post to LinkedIn.');
 		}
