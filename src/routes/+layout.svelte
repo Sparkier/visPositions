@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { goto, invalidate } from '$app/navigation';
 	import Help from '$lib/components/Help.svelte';
 	import Popup from '$lib/components/ui/Popup.svelte';
+	import { inject } from '@vercel/analytics';
 	import { HelpCircle, Mail, Plus } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import '../app.css';
+
+	inject({ mode: dev ? 'development' : 'production' });
 
 	let { data, children } = $props();
 
