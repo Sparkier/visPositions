@@ -39,6 +39,7 @@
 		"@supabase/supabase-js": "^2.49.4",
 		"@tailwindcss/forms": "^0.5.9",
 		"@tailwindcss/typography": "^0.5.15",
+		"@vercel/analytics": "^1.6.1",
 		"lucide-svelte": "^0.469.0",
 		"resend": "^4.1.2",
 		"svelte-device-info": "^1.0.6",
