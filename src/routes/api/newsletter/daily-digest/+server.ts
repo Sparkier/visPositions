@@ -11,6 +11,15 @@ import type { RequestHandler } from './$types';
 
 const resend = new Resend(RESEND_API_KEY);
 
+function escapeHtml(unsafe: string): string {
+	return unsafe
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
+}
+
 export const POST: RequestHandler = async ({ locals: { supabase }, request }) => {
 	const authHeader = request.headers.get('Authorization');
 	if (authHeader !== `Bearer ${DAILY_DIGEST_SECRET_KEY}`) {
@@ -51,9 +60,12 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 
 		posts.forEach((post) => {
 			const postLink = `${siteUrl}`;
+			const safeTitle = escapeHtml(post.title);
+			const safeDesc = post.description ? escapeHtml(post.description.substring(0, 100)) : '';
+
 			postsText += `- ${post.title}\n   ${post.description?.substring(0, 100)}...\n   View: ${postLink}\n\n`;
 			linkedinText += `- ${post.title}\n`;
-			postsHtml += `<li><a href="${postLink}"><strong>${post.title}</strong></a><br/>${post.description?.substring(0, 100)}...</li>`;
+			postsHtml += `<li><a href="${postLink}"><strong>${safeTitle}</strong></a><br/>${safeDesc}...</li>`;
 		});
 		postsHtml += `</ul>`;
 
