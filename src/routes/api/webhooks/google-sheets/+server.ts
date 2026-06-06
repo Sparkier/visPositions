@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import { WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { createClient } from '@supabase/supabase-js';
@@ -39,7 +40,10 @@ export const POST = async ({ request }) => {
 
 			// Validate essential fields to prevent bad inserts
 			if (!title || !description || !contact) {
-				errors.push({ title: title || '(no title)', error: 'Missing required fields (title, description, or contact)' });
+				errors.push({
+					title: title || '(no title)',
+					error: 'Missing required fields (title, description, or contact)'
+				});
 				continue;
 			}
 
@@ -83,7 +87,10 @@ export const POST = async ({ request }) => {
 
 			if (postError) {
 				console.error('Failed to create post:', postError);
-				errors.push({ title, error: `Insert failed: ${postError.message} (code: ${postError.code})` });
+				errors.push({
+					title,
+					error: `Insert failed: ${postError.message} (code: ${postError.code})`
+				});
 				continue;
 			}
 
@@ -126,15 +133,9 @@ export const POST = async ({ request }) => {
 			}
 		}
 
-		return new Response(JSON.stringify({ success: true, insertedCount, skippedCount, errors }), {
-			status: 200,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return json({ success: true, insertedCount, skippedCount, errors });
 	} catch (error) {
 		console.error('Webhook error:', error);
-		return new Response(
-			JSON.stringify({ error: 'Internal Server Error', details: String(error) }),
-			{ status: 500, headers: { 'Content-Type': 'application/json' } }
-		);
+		return json({ error: 'Internal Server Error', details: String(error) }, { status: 500 });
 	}
 };
