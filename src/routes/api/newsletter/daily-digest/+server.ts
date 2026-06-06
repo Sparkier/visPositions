@@ -5,7 +5,7 @@ import {
 	RESEND_API_KEY,
 	RESEND_AUDIENCE_ID
 } from '$env/static/private';
-import { json } from '@sveltejs/kit';
+import { json, error } from '@sveltejs/kit';
 import { Resend } from 'resend';
 import type { RequestHandler } from './$types';
 
@@ -31,7 +31,7 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 
 		if (postsError) {
 			console.error('Error fetching vetted posts:', postsError);
-			throw new Error('Error fetching posts');
+			throw error(500, 'Error fetching posts');
 		}
 
 		if (!posts || posts.length === 0) {
@@ -82,14 +82,14 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 
 		if (broadcast.error || !broadcast.data) {
 			console.error('Error creating daily digest broadcast:', broadcast.error);
-			throw new Error('Error creating daily digest broadcast');
+			throw error(500, 'Error creating daily digest broadcast');
 		}
 
 		const sendResult = await resend.broadcasts.send(broadcast.data.id);
 
 		if (sendResult.error) {
 			console.error('Error sending daily digest:', sendResult.error);
-			throw new Error('Error sending daily digest');
+			throw error(500, 'Error sending daily digest');
 		}
 
 		// Post to LinkedIn
@@ -136,8 +136,8 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 			success: true,
 			message: `Digest processed.`
 		});
-	} catch (error: unknown) {
-		console.error('Error in daily digest endpoint:', error);
-		throw new Error('Internal Server Error');
+	} catch (err: unknown) {
+		console.error('Error in daily digest endpoint:', err);
+		throw error(500, 'Internal Server Error');
 	}
 };

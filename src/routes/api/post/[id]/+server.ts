@@ -1,9 +1,9 @@
-import { text } from '@sveltejs/kit';
+import { text, error } from '@sveltejs/kit';
 export const DELETE = async ({ locals: { supabase, safeGetSession }, params }) => {
 	const { session } = await safeGetSession();
 
 	if (!session) {
-		throw new Error('Unauthorized');
+		throw error(401, 'Unauthorized');
 	}
 
 	const { data: posts } = await supabase
@@ -12,13 +12,13 @@ export const DELETE = async ({ locals: { supabase, safeGetSession }, params }) =
 		.eq('id', params.id)
 		.eq('creator', session.user.email);
 	if (!posts?.length) {
-		throw new Error('Not found or unauthorized');
+		throw error(404, 'Not found or unauthorized');
 	}
 
-	const { error } = await supabase.from('post').delete().eq('id', params.id);
+	const { error: dbError } = await supabase.from('post').delete().eq('id', params.id);
 
-	if (error) {
-		throw new Error('Internal Server Error');
+	if (dbError) {
+		throw error(500, 'Internal Server Error');
 	}
 
 	return text('Post deleted');
@@ -28,7 +28,7 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 	const { session } = await safeGetSession();
 
 	if (!session) {
-		throw new Error('Unauthorized');
+		throw error(401, 'Unauthorized');
 	}
 
 	const data = await request.json();
@@ -52,7 +52,7 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 		.eq('creator', session.user.email);
 
 	if (postError) {
-		throw new Error('Internal Server Error');
+		throw error(500, 'Internal Server Error');
 	}
 
 	// Delete existing keyword associations
@@ -62,7 +62,7 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 		.eq('post_id', params.id);
 
 	if (deleteError) {
-		throw new Error('Internal Server Error');
+		throw error(500, 'Internal Server Error');
 	}
 
 	// Insert new keyword associations
@@ -75,7 +75,7 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 		);
 
 		if (keywordError) {
-			throw new Error('Internal Server Error');
+			throw error(500, 'Internal Server Error');
 		}
 	}
 

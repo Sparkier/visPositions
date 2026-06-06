@@ -99,9 +99,9 @@
 		};
 	}
 
-	function onselect(args: any[], type: string) {
+	function onselect(args: unknown[], type: string) {
 		if (args[1] && typeof args[1] === 'object' && 'title' in args[1]) {
-			const elements = args[1].title;
+			const elements = (args[1] as { title: string[] }).title;
 			if (type === 'keyword') {
 				keywords = elements;
 			} else if (type === 'education') {
