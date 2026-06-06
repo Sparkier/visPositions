@@ -1,3 +1,4 @@
+import { text } from '@sveltejs/kit';
 export const DELETE = async ({ locals: { supabase, safeGetSession }, params }) => {
 	const { session } = await safeGetSession();
 
@@ -20,7 +21,7 @@ export const DELETE = async ({ locals: { supabase, safeGetSession }, params }) =
 		throw new Error('Internal Server Error');
 	}
 
-	return new Response('Post deleted', { status: 200 });
+	return text('Post deleted');
 };
 
 export const PATCH = async ({ locals: { supabase, safeGetSession }, params, request }) => {
@@ -78,5 +79,5 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 		}
 	}
 
-	return new Response('Post updated', { status: 200 });
+	return text('Post updated');
 };
