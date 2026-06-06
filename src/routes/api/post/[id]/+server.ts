@@ -42,7 +42,6 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 		contact: data.contact,
 		industry: data.industry,
 		education: data.education,
-		vetted: data.vetted,
 		expiration_date: data.expiration_date
 	};
 
