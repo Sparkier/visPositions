@@ -1,5 +1,6 @@
 import {
 	DAILY_DIGEST_SECRET_KEY,
+	FROM_EMAIL,
 	LINKEDIN_ACCESS_TOKEN,
 	LINKEDIN_ORGANIZATION_ID,
 	RESEND_API_KEY,
@@ -85,7 +86,7 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 
 		const broadcast = await resend.broadcasts.create({
 			name: `Daily Digest ${new Date().toLocaleDateString()}`,
-			from: 'info@vispositions.com',
+			from: FROM_EMAIL,
 			subject: subject,
 			text: textBody,
 			html: htmlBody,
