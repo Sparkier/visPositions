@@ -1,4 +1,4 @@
-import { RESEND_API_KEY } from '$env/static/private';
+import { ADMIN_EMAIL, RESEND_API_KEY } from '$env/static/private';
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
 
@@ -10,7 +10,7 @@ export async function POST({ request }) {
 
 		await resend.emails.send({
 			from: 'info@vispositions.com',
-			to: 'alex@a13x.io',
+			to: ADMIN_EMAIL,
 			subject: 'New Post Submitted',
 			text: `A new post was submitted: \n\nTitle: ${payload.title}\n\nContent: ${payload.description}`
 		});

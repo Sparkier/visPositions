@@ -1,3 +1,4 @@
+import { ADMIN_EMAIL } from '$env/static/private';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession } }) => {
@@ -8,7 +9,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
 	}
 
 	const userEmail = session.user.email;
-	const isAdmin = userEmail === 'alex@a13x.io';
+	const isAdmin = userEmail === ADMIN_EMAIL;
 
 	let query = supabase
 		.from('post')

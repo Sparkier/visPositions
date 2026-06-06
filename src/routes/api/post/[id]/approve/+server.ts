@@ -1,3 +1,4 @@
+import { ADMIN_EMAIL } from '$env/static/private';
 import { error, json, type RequestHandler } from '@sveltejs/kit';
 
 export const PATCH: RequestHandler = async ({ locals: { supabase, safeGetSession }, params }) => {
@@ -7,7 +8,7 @@ export const PATCH: RequestHandler = async ({ locals: { supabase, safeGetSession
 		throw error(401, 'Unauthorized');
 	}
 
-	if (session.user.email !== 'alex@a13x.io') {
+	if (session.user.email !== ADMIN_EMAIL) {
 		throw error(403, 'Forbidden');
 	}
 
