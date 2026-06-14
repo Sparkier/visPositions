@@ -10,7 +10,7 @@ vi.mock('$env/static/private', () => ({
 // Mock resend
 vi.mock('resend', () => {
 	return {
-		Resend: vi.fn().mockImplementation(function() {
+		Resend: vi.fn().mockImplementation(function () {
 			return {
 				contacts: {
 					create: vi.fn().mockResolvedValue({ error: null })
