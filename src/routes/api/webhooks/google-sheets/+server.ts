@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import { WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { createClient } from '@supabase/supabase-js';
+import { getDefaultExpirationDate } from '$lib/utils';
 
 // Use the service role key to bypass RLS policies.
 // The anon key is subject to RLS and will silently block inserts
@@ -61,13 +62,7 @@ export const POST = async ({ request }) => {
 			}
 
 			// 2. Prepare Expiration Date
-			const finalExpirationDate =
-				expiration_date ||
-				(() => {
-					const defaultDate = new Date();
-					defaultDate.setMonth(defaultDate.getMonth() + 3);
-					return defaultDate.toISOString();
-				})();
+			const finalExpirationDate = expiration_date || getDefaultExpirationDate().toISOString();
 
 			// 3. Insert Post
 			const { data: postData, error: postError } = await supabaseAdmin
