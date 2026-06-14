@@ -8,18 +8,10 @@ import {
 } from '$env/static/private';
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
+import { escapeHtml } from '$lib/utils';
 import type { RequestHandler } from './$types';
 
 const resend = new Resend(RESEND_API_KEY);
-
-function escapeHtml(unsafe: string): string {
-	return unsafe
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&#039;');
-}
 
 export const POST: RequestHandler = async ({ locals: { supabase }, request }) => {
 	const authHeader = request.headers.get('Authorization');
