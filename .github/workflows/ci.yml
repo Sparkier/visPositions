@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Create dummy .env file
+        run: |
+          echo "PUBLIC_SUPABASE_ANON_KEY=dummy" >> .env
+          echo "PUBLIC_SUPABASE_URL=http://localhost:54321" >> .env
+          echo "DAILY_DIGEST_SECRET_KEY=dummy" >> .env
+          echo "RESEND_API_KEY=dummy" >> .env
+          echo "ADMIN_EMAIL=admin@example.com" >> .env
+          echo "LINKEDIN_ACCESS_TOKEN=dummy" >> .env
+          echo "WEBHOOK_SECRET=dummy" >> .env
+          echo "FROM_EMAIL=from@example.com" >> .env
+          echo "LINKEDIN_ORGANIZATION_ID=dummy" >> .env
+          echo "RESEND_AUDIENCE_ID=dummy" >> .env
+          echo "SUPABASE_SERVICE_ROLE_KEY=dummy" >> .env
+
+      - name: Run linting
+        run: bun run lint
+
+      - name: Run type-checking
+        run: bun run check
+
+      - name: Run tests
+        run: bun run test
+
+      - name: Run build
+        run: bun run build
