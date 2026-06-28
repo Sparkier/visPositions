@@ -4,7 +4,7 @@
 		visPositions is a simiple website that highlights open positions in the VIS/HCI field. Anyone
 		can post on this website, but positions have to be vetted before they're shown to all users. If
 		you want to learn more about visPositions, read
-		<a class="link" href="https://a13x.io/blog/vispositions" target="_blank"> this blogpost </a>.
+		<a class="link" href="https://a13x.io/blog/vispositions" target="_blank" rel="noopener noreferrer"> this blogpost </a>.
 	</p>
 	<h2>Privacy Policy</h2>
 	<p>
