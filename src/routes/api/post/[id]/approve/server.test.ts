@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { HttpError } from '@sveltejs/kit';
 import { PATCH } from './+server';
 
 vi.mock('$env/static/private', () => ({
@@ -15,11 +16,12 @@ describe('Post Approve API', () => {
 		const params = { id: '123' };
 
 		try {
-			await PATCH({ locals, params } as any);
+			await PATCH({ locals, params } as unknown as Parameters<typeof PATCH>[0]);
 			expect.fail('Should have thrown an error');
-		} catch (e: any) {
-			expect(e.status).toBe(401);
-			expect(e.body.message).toBe('Unauthorized');
+		} catch (e) {
+			const error = e as HttpError;
+			expect(error.status).toBe(401);
+			expect(error.body.message).toBe('Unauthorized');
 		}
 	});
 
@@ -36,11 +38,12 @@ describe('Post Approve API', () => {
 		const params = { id: '123' };
 
 		try {
-			await PATCH({ locals, params } as any);
+			await PATCH({ locals, params } as unknown as Parameters<typeof PATCH>[0]);
 			expect.fail('Should have thrown an error');
-		} catch (e: any) {
-			expect(e.status).toBe(403);
-			expect(e.body.message).toBe('Forbidden');
+		} catch (e) {
+			const error = e as HttpError;
+			expect(error.status).toBe(403);
+			expect(error.body.message).toBe('Forbidden');
 		}
 	});
 
@@ -57,11 +60,12 @@ describe('Post Approve API', () => {
 		const params = { id: '' };
 
 		try {
-			await PATCH({ locals, params } as any);
+			await PATCH({ locals, params } as unknown as Parameters<typeof PATCH>[0]);
 			expect.fail('Should have thrown an error');
-		} catch (e: any) {
-			expect(e.status).toBe(400);
-			expect(e.body.message).toBe('Post ID is required');
+		} catch (e) {
+			const error = e as HttpError;
+			expect(error.status).toBe(400);
+			expect(error.body.message).toBe('Post ID is required');
 		}
 	});
 
@@ -85,11 +89,12 @@ describe('Post Approve API', () => {
 		const params = { id: '123' };
 
 		try {
-			await PATCH({ locals, params } as any);
+			await PATCH({ locals, params } as unknown as Parameters<typeof PATCH>[0]);
 			expect.fail('Should have thrown an error');
-		} catch (e: any) {
-			expect(e.status).toBe(500);
-			expect(e.body.message).toBe('Internal Server Error');
+		} catch (e) {
+			const error = e as HttpError;
+			expect(error.status).toBe(500);
+			expect(error.body.message).toBe('Internal Server Error');
 		}
 	});
 
@@ -112,17 +117,19 @@ describe('Post Approve API', () => {
 		};
 		const params = { id: '123' };
 
-		const response = await PATCH({ locals, params } as any);
+		const response = await PATCH({ locals, params } as unknown as Parameters<typeof PATCH>[0]);
 		const data = await response.json();
 
 		expect(response.status).toBe(200);
 		expect(data).toEqual({ success: true, message: 'Post approved' });
 
 		expect(mockSupabase.from).toHaveBeenCalledWith('post');
-		expect(mockSupabase.update).toHaveBeenCalledWith(expect.objectContaining({
-			vetted: true,
-			vetted_at: expect.any(String)
-		}));
+		expect(mockSupabase.update).toHaveBeenCalledWith(
+			expect.objectContaining({
+				vetted: true,
+				vetted_at: expect.any(String)
+			})
+		);
 		expect(mockSupabase.eq).toHaveBeenCalledWith('id', '123');
 	});
 });

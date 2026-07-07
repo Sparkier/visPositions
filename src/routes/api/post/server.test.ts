@@ -40,7 +40,7 @@ describe('POST /api/post', () => {
 					safeGetSession: mockSafeGetSession
 				},
 				request
-			} as any)
+			} as unknown as Parameters<typeof POST>[0])
 		).rejects.toThrow('Failed to create post.');
 	});
 
@@ -82,7 +82,7 @@ describe('POST /api/post', () => {
 					safeGetSession: mockSafeGetSession
 				},
 				request
-			} as any)
+			} as unknown as Parameters<typeof POST>[0])
 		).rejects.toThrow('Post creation succeeded but no data returned.');
 	});
 
@@ -134,7 +134,7 @@ describe('POST /api/post', () => {
 				safeGetSession: mockSafeGetSession
 			},
 			request
-		} as any);
+		} as unknown as Parameters<typeof POST>[0]);
 
 		expect(response.status).toBe(200);
 	});

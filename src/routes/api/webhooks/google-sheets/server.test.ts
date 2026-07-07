@@ -63,7 +63,7 @@ describe('Google Sheets Webhook API', () => {
 			body: JSON.stringify(payload)
 		});
 
-		const response = await POST({ request } as any);
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 		const data = await response.json();
 
 		expect(response.status).toBe(200);
