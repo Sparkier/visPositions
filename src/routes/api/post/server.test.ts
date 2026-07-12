@@ -1,15 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { POST } from './+server';
 
-// Need to mock SvelteKit error so it actually throws an error we can catch
-vi.mock('@sveltejs/kit', () => ({
-	error: vi.fn((status, message) => {
-		const err = new Error(message);
-		(err as Error & { status: number }).status = status;
-		return err;
-	})
-}));
-
 describe('POST /api/post', () => {
 	it('should throw an error if post DB insertion fails', async () => {
 		const mockSupabase = {
@@ -50,7 +41,7 @@ describe('POST /api/post', () => {
 				},
 				request
 			} as unknown as Parameters<typeof POST>[0])
-		).rejects.toThrow('Failed to create post.');
+		).rejects.toMatchObject({ status: 500, body: { message: 'Failed to create post.' } });
 	});
 
 	it('should throw an error if post DB insertion succeeds but no data is returned', async () => {
@@ -92,7 +83,7 @@ describe('POST /api/post', () => {
 				},
 				request
 			} as unknown as Parameters<typeof POST>[0])
-		).rejects.toThrow('Post creation succeeded but no data returned.');
+		).rejects.toMatchObject({ status: 500, body: { message: 'Post creation succeeded but no data returned.' } });
 	});
 
 	it('should successfully create a post', async () => {
