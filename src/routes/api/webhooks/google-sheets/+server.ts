@@ -104,21 +104,27 @@ export const POST = async ({ request }) => {
 					.in('title', keywords);
 
 				const keywordIdsToInsert = [];
+				const newKeywordsToInsert: string[] = [];
 
 				for (const kw of keywords) {
 					const found = existingKeywords?.find((ek) => ek.title.toLowerCase() === kw.toLowerCase());
 					if (found) {
 						keywordIdsToInsert.push(found.id);
 					} else {
-						const { data: newKw, error: kwError } = await supabaseAdmin
-							.from('keyword')
-							.insert({ title: kw })
-							.select()
-							.single();
+						newKeywordsToInsert.push(kw);
+					}
+				}
 
-						if (!kwError && newKw) {
-							keywordIdsToInsert.push(newKw.id);
-						}
+				if (newKeywordsToInsert.length > 0) {
+					const { data: newKws, error: kwError } = await supabaseAdmin
+						.from('keyword')
+						.insert(newKeywordsToInsert.map((kw) => ({ title: kw })))
+						.select();
+
+					if (!kwError && newKws) {
+						keywordIdsToInsert.push(...newKws.map((kw) => kw.id));
+					} else if (kwError) {
+						console.error('Failed to bulk insert keywords:', kwError);
 					}
 				}
 
