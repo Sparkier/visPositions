@@ -33,7 +33,7 @@ describe('Google Sheets Webhook API', () => {
 			body: JSON.stringify([])
 		});
 
-		const response = await POST({ request } as any);
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 
 		expect(response.status).toBe(401);
 		expect(await response.text()).toBe('Unauthorized');
@@ -46,7 +46,7 @@ describe('Google Sheets Webhook API', () => {
 			body: JSON.stringify([])
 		});
 
-		const response = await POST({ request } as any);
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 
 		expect(response.status).toBe(401);
 		expect(await response.text()).toBe('Unauthorized');
@@ -59,7 +59,7 @@ describe('Google Sheets Webhook API', () => {
 			body: JSON.stringify({ title: 'Not an array' })
 		});
 
-		const response = await POST({ request } as any);
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 
 		expect(response.status).toBe(400);
 		expect(await response.text()).toBe('Invalid payload format. Expected an array of rows.');
@@ -81,7 +81,7 @@ describe('Google Sheets Webhook API', () => {
 			])
 		});
 
-		const response = await POST({ request } as any);
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 
 		expect(response.status).toBe(200);
 		const data = await response.json();
