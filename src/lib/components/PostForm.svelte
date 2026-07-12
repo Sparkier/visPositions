@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import type { Keyword, Post } from '$lib/types';
+	import { getDefaultExpirationDate } from '$lib/utils';
 	import Button from './ui/Button.svelte';
 	import Input from './ui/Input.svelte';
 	import MultiSelect from './ui/MultiSelect.svelte';
@@ -31,9 +32,7 @@
 			expiration_date = new Date(editing.expiration_date).toISOString().split('T')[0];
 		} else {
 			// Default to 3 months from now for new posts
-			const defaultDate = new Date();
-			defaultDate.setMonth(defaultDate.getMonth() + 3);
-			expiration_date = defaultDate.toISOString().split('T')[0];
+			expiration_date = getDefaultExpirationDate().toISOString().split('T')[0];
 		}
 	});
 

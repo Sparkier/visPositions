@@ -47,20 +47,21 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		// Common email body parts
 		const textBodyHeader = `Here are the new positions posted on vispositions in the last 24 hours:\n\n`;
 		const htmlBodyHeader = `<p>Here are the new positions posted on <a href="${siteUrl}">visPositions</a> in the last 24 hours:</p><ul>`;
-		let postsText = '';
-		let linkedinText = '';
-		let postsHtml = '';
-
-		posts.forEach((post) => {
-			const postLink = `${siteUrl}`;
-			const safeTitle = escapeHtml(post.title);
-			const safeDesc = post.description ? escapeHtml(post.description.substring(0, 100)) : '';
-
-			postsText += `- ${post.title}\n   ${post.description?.substring(0, 100)}...\n   View: ${postLink}\n\n`;
-			linkedinText += `- ${post.title}\n`;
-			postsHtml += `<li><a href="${postLink}"><strong>${safeTitle}</strong></a><br/>${safeDesc}...</li>`;
-		});
-		postsHtml += `</ul>`;
+		const postsText = posts
+			.map(
+				(post) =>
+					`- ${post.title}\n   ${post.description?.substring(0, 100)}...\n   View: ${siteUrl}\n\n`
+			)
+			.join('');
+		const linkedinText = posts.map((post) => `- ${post.title}\n`).join('');
+		const postsHtml =
+			posts
+				.map((post) => {
+					const safeTitle = escapeHtml(post.title);
+					const safeDesc = post.description ? escapeHtml(post.description.substring(0, 100)) : '';
+					return `<li><a href="${siteUrl}"><strong>${safeTitle}</strong></a><br/>${safeDesc}...</li>`;
+				})
+				.join('') + `</ul>`;
 
 		const textBody =
 			`${textBodyHeader}${postsText}` +

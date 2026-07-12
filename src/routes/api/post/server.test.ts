@@ -83,7 +83,10 @@ describe('POST /api/post', () => {
 				},
 				request
 			} as unknown as Parameters<typeof POST>[0])
-		).rejects.toMatchObject({ status: 500, body: { message: 'Post creation succeeded but no data returned.' } });
+		).rejects.toMatchObject({
+			status: 500,
+			body: { message: 'Post creation succeeded but no data returned.' }
+		});
 	});
 
 	it('should successfully create a post', async () => {

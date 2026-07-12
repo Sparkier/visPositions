@@ -1,4 +1,5 @@
 import { error } from '@sveltejs/kit';
+import { getDefaultExpirationDate } from '$lib/utils';
 
 export const POST = async ({ locals: { supabase, safeGetSession }, request }) => {
 	const { session } = await safeGetSession();
@@ -11,13 +12,7 @@ export const POST = async ({ locals: { supabase, safeGetSession }, request }) =>
 		await request.json();
 
 	// Use provided expiration date or calculate default (3 months from now)
-	const finalExpirationDate =
-		expiration_date ||
-		(() => {
-			const defaultDate = new Date();
-			defaultDate.setMonth(defaultDate.getMonth() + 3);
-			return defaultDate.toISOString();
-		})();
+	const finalExpirationDate = expiration_date || getDefaultExpirationDate().toISOString();
 
 	const { data: postData, error: postError } = await supabase
 		.from('post')
