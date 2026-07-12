@@ -27,7 +27,7 @@ describe('Newsletter Subscribe API', () => {
 			body: JSON.stringify({})
 		});
 
-		const response = await POST({ request } as any);
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 		const data = await response.json();
 
 		expect(response.status).toBe(400);
@@ -43,7 +43,7 @@ describe('Newsletter Subscribe API', () => {
 			body: JSON.stringify({ email: 123 })
 		});
 
-		const response = await POST({ request } as any);
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 		const data = await response.json();
 
 		expect(response.status).toBe(400);
@@ -59,7 +59,7 @@ describe('Newsletter Subscribe API', () => {
 			body: JSON.stringify({ email: 'invalid-email' })
 		});
 
-		const response = await POST({ request } as any);
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 		const data = await response.json();
 
 		expect(response.status).toBe(400);

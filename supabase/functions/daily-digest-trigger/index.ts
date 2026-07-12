@@ -12,8 +12,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 console.log('Daily Digest Trigger Function Started');
 
 // Use Deno.serve directly
-Deno.serve(async (_req) => {
-	// _req is unused, which is fine for this trigger
+Deno.serve(async () => {
 	// 1. Get Environment Variables
 	const siteUrl = 'https://vispositions.com';
 	const secretKey = Deno.env.get('DAILY_DIGEST_SECRET_KEY');
