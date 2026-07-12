@@ -1,5 +1,6 @@
 import {
 	DAILY_DIGEST_SECRET_KEY,
+	FROM_EMAIL,
 	LINKEDIN_ACCESS_TOKEN,
 	LINKEDIN_ORGANIZATION_ID,
 	RESEND_API_KEY,
@@ -7,6 +8,7 @@ import {
 } from '$env/static/private';
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
+import { escapeHtml } from '$lib/utils';
 import type { RequestHandler } from './$types';
 
 const resend = new Resend(RESEND_API_KEY);
@@ -51,9 +53,12 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 
 		posts.forEach((post) => {
 			const postLink = `${siteUrl}`;
+			const safeTitle = escapeHtml(post.title);
+			const safeDesc = post.description ? escapeHtml(post.description.substring(0, 100)) : '';
+
 			postsText += `- ${post.title}\n   ${post.description?.substring(0, 100)}...\n   View: ${postLink}\n\n`;
 			linkedinText += `- ${post.title}\n`;
-			postsHtml += `<li><a href="${postLink}"><strong>${post.title}</strong></a><br/>${post.description?.substring(0, 100)}...</li>`;
+			postsHtml += `<li><a href="${postLink}"><strong>${safeTitle}</strong></a><br/>${safeDesc}...</li>`;
 		});
 		postsHtml += `</ul>`;
 
@@ -73,7 +78,7 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 
 		const broadcast = await resend.broadcasts.create({
 			name: `Daily Digest ${new Date().toLocaleDateString()}`,
-			from: 'info@vispositions.com',
+			from: FROM_EMAIL,
 			subject: subject,
 			text: textBody,
 			html: htmlBody,
