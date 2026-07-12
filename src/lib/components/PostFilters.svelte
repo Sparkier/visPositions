@@ -99,7 +99,7 @@
 		};
 	}
 
-	function onselect(args: unknown[], type: string) {
+	function onselect(args: [string, unknown], type: string) {
 		if (args[1] && typeof args[1] === 'object' && 'title' in args[1]) {
 			const elements = (args[1] as { title: string[] }).title;
 			if (type === 'keyword') {
@@ -127,8 +127,8 @@
 		data={industryData}
 		options={vegaOptions}
 		signalListeners={{
-			selected: (...args) => {
-				onselect(args, 'industry');
+			selected: (name: string, value: unknown) => {
+				onselect([name, value], 'industry');
 			}
 		}}
 	/>
@@ -137,8 +137,8 @@
 		data={educationData}
 		options={vegaOptions}
 		signalListeners={{
-			selected: (...args) => {
-				onselect(args, 'education');
+			selected: (name: string, value: unknown) => {
+				onselect([name, value], 'education');
 			}
 		}}
 	/>
@@ -147,8 +147,8 @@
 		data={keywordData}
 		options={vegaOptions}
 		signalListeners={{
-			selected: (...args) => {
-				onselect(args, 'keyword');
+			selected: (name: string, value: unknown) => {
+				onselect([name, value], 'keyword');
 			}
 		}}
 	/>

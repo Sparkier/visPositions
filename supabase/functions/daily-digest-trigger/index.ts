@@ -13,7 +13,6 @@ console.log('Daily Digest Trigger Function Started');
 
 // Use Deno.serve directly
 Deno.serve(async () => {
-	// _req is unused, which is fine for this trigger
 	// 1. Get Environment Variables
 	const siteUrl = 'https://vispositions.com';
 	const secretKey = Deno.env.get('DAILY_DIGEST_SECRET_KEY');

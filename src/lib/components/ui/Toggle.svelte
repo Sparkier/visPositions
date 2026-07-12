@@ -18,9 +18,7 @@
 	class={twMerge('flex cursor-pointer items-center gap-2', classNames)}
 	onclick={() => {
 		checked = !checked;
-		if (onchange) {
-			onchange(checked);
-		}
+		onchange?.(checked);
 	}}
 >
 	<input type="checkbox" bind:checked class="peer sr-only" />

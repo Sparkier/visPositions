@@ -1,4 +1,5 @@
-import { text, error } from '@sveltejs/kit';
+import { error, text } from '@sveltejs/kit';
+
 export const DELETE = async ({ locals: { supabase, safeGetSession }, params }) => {
 	const { session } = await safeGetSession();
 
@@ -15,9 +16,9 @@ export const DELETE = async ({ locals: { supabase, safeGetSession }, params }) =
 		throw error(404, 'Not found or unauthorized');
 	}
 
-	const { error: dbError } = await supabase.from('post').delete().eq('id', params.id);
+	const { error: deleteError } = await supabase.from('post').delete().eq('id', params.id);
 
-	if (dbError) {
+	if (deleteError) {
 		throw error(500, 'Internal Server Error');
 	}
 
@@ -41,7 +42,6 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 		contact: data.contact,
 		industry: data.industry,
 		education: data.education,
-		vetted: data.vetted,
 		expiration_date: data.expiration_date
 	};
 
