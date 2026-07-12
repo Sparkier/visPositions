@@ -41,7 +41,7 @@ describe('POST /api/post', () => {
 				},
 				request
 			} as unknown as Parameters<typeof POST>[0])
-		).rejects.toThrow('Failed to create post.');
+		).rejects.toMatchObject({ status: 500, body: { message: 'Failed to create post.' } });
 	});
 
 	it('should throw an error if post DB insertion succeeds but no data is returned', async () => {
@@ -83,7 +83,10 @@ describe('POST /api/post', () => {
 				},
 				request
 			} as unknown as Parameters<typeof POST>[0])
-		).rejects.toThrow('Post creation succeeded but no data returned.');
+		).rejects.toMatchObject({
+			status: 500,
+			body: { message: 'Post creation succeeded but no data returned.' }
+		});
 	});
 
 	it('should successfully create a post', async () => {

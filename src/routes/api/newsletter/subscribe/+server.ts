@@ -1,5 +1,5 @@
 import { RESEND_API_KEY, RESEND_AUDIENCE_ID } from '$env/static/private';
-import { json } from '@sveltejs/kit';
+import { json, error } from '@sveltejs/kit';
 import { Resend } from 'resend';
 import type { RequestHandler } from './$types';
 
@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	});
 
 	if (subscribeResult.error) {
-		throw new Error('Failed to subscribe.');
+		throw error(500, 'Failed to subscribe.');
 	}
 
 	return json({ success: true, message: 'Successfully subscribed!' });

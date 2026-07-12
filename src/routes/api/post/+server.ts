@@ -1,10 +1,11 @@
+import { error } from '@sveltejs/kit';
 import { getDefaultExpirationDate } from '$lib/utils';
 
 export const POST = async ({ locals: { supabase, safeGetSession }, request }) => {
 	const { session } = await safeGetSession();
 
 	if (!session) {
-		throw new Error('Unauthorized');
+		throw error(401, 'Unauthorized');
 	}
 
 	const { title, description, contact, industry, education, keywords, expiration_date } =
@@ -29,11 +30,11 @@ export const POST = async ({ locals: { supabase, safeGetSession }, request }) =>
 		.single();
 
 	if (postError) {
-		throw new Error('Failed to create post.');
+		throw error(500, 'Failed to create post.');
 	}
 
 	if (!postData) {
-		throw new Error('Post creation succeeded but no data returned.');
+		throw error(500, 'Post creation succeeded but no data returned.');
 	}
 
 	// Insert new keyword associations
@@ -46,7 +47,7 @@ export const POST = async ({ locals: { supabase, safeGetSession }, request }) =>
 		);
 
 		if (keywordError) {
-			throw new Error('Failed to associate keywords.');
+			throw error(500, 'Failed to associate keywords.');
 		}
 	}
 
