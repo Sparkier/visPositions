@@ -50,7 +50,7 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		const postsText = posts
 			.map(
 				(post) =>
-					`- ${post.title}\n   ${post.description?.substring(0, 100)}...\n   View: ${siteUrl}\n\n`
+					`- ${post.title}\n   ${post.description?.substring(0, 100)}...\n   View: ${siteUrl}/jobs/${post.id}\n\n`
 			)
 			.join('');
 		const linkedinText = posts.map((post) => `- ${post.title}\n`).join('');
@@ -59,20 +59,25 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 				.map((post) => {
 					const safeTitle = escapeHtml(post.title);
 					const safeDesc = post.description ? escapeHtml(post.description.substring(0, 100)) : '';
-					return `<li><a href="${siteUrl}"><strong>${safeTitle}</strong></a><br/>${safeDesc}...</li>`;
+					return `<li><a href="${siteUrl}/jobs/${post.id}"><strong>${safeTitle}</strong></a><br/>${safeDesc}...</li>`;
 				})
 				.join('') + `</ul>`;
 
 		const textBody =
 			`${textBodyHeader}${postsText}` +
 			`Visit ${siteUrl} to see more.\n\n` +
+			`Know someone who'd be a good fit? Forward them this email or share ${siteUrl} — it helps more people find these roles.\n\n` +
 			`To unsubscribe from these emails, click here: {{{RESEND_UNSUBSCRIBE_URL}}}`;
 
-		const linkedInBody = `${textBodyHeader}${linkedinText}\n\nVisit ${siteUrl} to see more.\n\n#job #visualization #dataviz`;
+		const linkedInPs = `PS: This is a side project I maintain in my spare time — now in its second year. If you find it useful, a like or repost genuinely helps more people discover it. 🙏`;
+
+		const linkedInBody = `${textBodyHeader}${linkedinText}\n\nVisit ${siteUrl} to see more.\n\n${linkedInPs}\n\n#dataviz #datavisualization #hiring #datavizjobs #informationdesign`;
 
 		const htmlBody =
 			`${htmlBodyHeader}${postsHtml}` +
 			`<p>Visit <a href="${siteUrl}">${siteUrl}</a> to see more.</p>` +
+			`<p>Know someone who'd be a good fit? Forward them this email or share ` +
+			`<a href="${siteUrl}">${siteUrl}</a> — it helps more people find these roles.</p>` +
 			`<p style="font-size: 0.8em; color: #666;">` +
 			`To unsubscribe, <a href={{{RESEND_UNSUBSCRIBE_URL}}}>click here</a>.` +
 			`</p>`;
