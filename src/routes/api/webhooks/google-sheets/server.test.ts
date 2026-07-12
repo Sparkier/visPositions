@@ -27,6 +27,72 @@ vi.mock('@supabase/supabase-js', () => {
 });
 
 describe('Google Sheets Webhook API', () => {
+	it('should return 401 if missing authorization header', async () => {
+		const request = new Request('http://localhost/api/webhooks/google-sheets', {
+			method: 'POST',
+			body: JSON.stringify([])
+		});
+
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
+
+		expect(response.status).toBe(401);
+		expect(await response.text()).toBe('Unauthorized');
+	});
+
+	it('should return 401 if invalid authorization header', async () => {
+		const request = new Request('http://localhost/api/webhooks/google-sheets', {
+			method: 'POST',
+			headers: { Authorization: 'Bearer wrong_secret' },
+			body: JSON.stringify([])
+		});
+
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
+
+		expect(response.status).toBe(401);
+		expect(await response.text()).toBe('Unauthorized');
+	});
+
+	it('should return 400 if payload is not an array (object passed)', async () => {
+		const request = new Request('http://localhost/api/webhooks/google-sheets', {
+			method: 'POST',
+			headers: { Authorization: 'Bearer test_webhook_secret' },
+			body: JSON.stringify({ title: 'Not an array' })
+		});
+
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
+
+		expect(response.status).toBe(400);
+		expect(await response.text()).toBe('Invalid payload format. Expected an array of rows.');
+	});
+
+	it('should process a valid payload array', async () => {
+		const request = new Request('http://localhost/api/webhooks/google-sheets', {
+			method: 'POST',
+			headers: { Authorization: 'Bearer test_webhook_secret' },
+			body: JSON.stringify([
+				{
+					title: 'Software Engineer',
+					description: 'Develop awesome apps',
+					contact: 'test@example.com',
+					industry: true,
+					education: 'BSc',
+					keywords: ['svelte', 'vitest']
+				}
+			])
+		});
+
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
+
+		expect(response.status).toBe(200);
+		const data = await response.json();
+		expect(data).toEqual({
+			success: true,
+			insertedCount: 1,
+			skippedCount: 0,
+			errors: []
+		});
+	});
+
 	it('should return errors for rows missing required fields', async () => {
 		const payload = [
 			{
