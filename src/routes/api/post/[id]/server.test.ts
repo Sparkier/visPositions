@@ -6,7 +6,7 @@ import { error } from '@sveltejs/kit';
 vi.mock('@sveltejs/kit', () => ({
 	error: vi.fn((status, message) => {
 		const err = new Error(message);
-		(err as any).status = status;
+		(err as Error & { status: number }).status = status;
 		return err;
 	}),
 	text: vi.fn((message) => new Response(message))
@@ -41,7 +41,9 @@ describe('DELETE /api/post/[id]', () => {
 			id: 'non-existent-id'
 		};
 
-		await expect(DELETE({ locals, params } as any)).rejects.toThrow('Not found or unauthorized');
+		await expect(
+			DELETE({ locals, params } as unknown as Parameters<typeof DELETE>[0])
+		).rejects.toThrow('Not found or unauthorized');
 
 		// Verify that error was called with 404
 		expect(error).toHaveBeenCalledWith(404, 'Not found or unauthorized');

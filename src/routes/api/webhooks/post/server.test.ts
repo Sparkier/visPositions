@@ -29,7 +29,7 @@ describe('Post Webhook API', () => {
 			body: JSON.stringify({ title: 'Test', description: 'Test desc' })
 		});
 
-		const response = await POST({ request } as any);
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 
 		expect(response.status).toBe(401);
 		expect(await response.text()).toBe('Unauthorized');
@@ -44,7 +44,7 @@ describe('Post Webhook API', () => {
 			body: JSON.stringify({ title: 'Test', description: 'Test desc' })
 		});
 
-		const response = await POST({ request } as any);
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 
 		expect(response.status).toBe(401);
 		expect(await response.text()).toBe('Unauthorized');
@@ -59,7 +59,7 @@ describe('Post Webhook API', () => {
 			body: JSON.stringify({ title: 'Test', description: 'Test desc' })
 		});
 
-		const response = await POST({ request } as any);
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 		const data = await response.json();
 
 		expect(response.status).toBe(200);

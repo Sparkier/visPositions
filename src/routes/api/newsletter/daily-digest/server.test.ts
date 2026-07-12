@@ -31,7 +31,9 @@ describe('Daily Digest API', () => {
 			method: 'POST'
 		});
 
-		const response = await POST({ request, locals: { supabase: {} } } as any);
+		const response = await POST({ request, locals: { supabase: {} } } as unknown as Parameters<
+			typeof POST
+		>[0]);
 		const data = await response.json();
 
 		expect(response.status).toBe(401);
@@ -42,11 +44,13 @@ describe('Daily Digest API', () => {
 		const request = new Request('http://localhost/api/newsletter/daily-digest', {
 			method: 'POST',
 			headers: {
-				'Authorization': 'Bearer wrong_key'
+				Authorization: 'Bearer wrong_key'
 			}
 		});
 
-		const response = await POST({ request, locals: { supabase: {} } } as any);
+		const response = await POST({ request, locals: { supabase: {} } } as unknown as Parameters<
+			typeof POST
+		>[0]);
 		const data = await response.json();
 
 		expect(response.status).toBe(401);
