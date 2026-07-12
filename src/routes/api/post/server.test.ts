@@ -1,6 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
 import { POST } from './+server';
 
+// Need to mock SvelteKit error so it actually throws an error we can catch
+vi.mock('@sveltejs/kit', () => ({
+	error: vi.fn((status, message) => {
+		const err = new Error(message);
+		(err as Error & { status: number }).status = status;
+		return err;
+	})
+}));
+
 describe('POST /api/post', () => {
 	it('should throw an error if post DB insertion fails', async () => {
 		const mockSupabase = {
