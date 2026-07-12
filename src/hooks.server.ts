@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { type Handle, redirect } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
@@ -18,7 +18,7 @@ const supabase: Handle = async ({ event, resolve }) => {
 			 * the cookie options. Setting `path` to `/` replicates previous/
 			 * standard behavior.
 			 */
-			setAll: (cookiesToSet) => {
+			setAll: (cookiesToSet: { name: string; value: string; options: CookieOptions }[]) => {
 				cookiesToSet.forEach(({ name, value, options }) => {
 					event.cookies.set(name, value, { ...options, path: '/' });
 				});

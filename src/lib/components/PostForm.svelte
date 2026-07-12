@@ -126,7 +126,11 @@
 		<Button
 			disabled={!title || !description || !contact || !education || !expiration_date}
 			onclick={() => {
-				editing ? updatePost() : addPost();
+				if (editing) {
+					updatePost();
+				} else {
+					addPost();
+				}
 			}}
 		>
 			{editing ? 'Update' : 'Create'}
