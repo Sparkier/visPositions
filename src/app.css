@@ -1,13 +1,21 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+@theme {
+	--color-primary: #0d6797;
+	--color-primary-light: #1884bd;
+	--color-primary-dark: #094d71;
+	--color-accent: #ff8fa3;
+}
 
 @layer base {
 	h1 {
 		@apply text-2xl font-bold;
 	}
 	h2 {
-		@apply pb-2 pt-3 text-xl font-semibold;
+		@apply pt-3 pb-2 text-xl font-semibold;
 	}
 	h3 {
 		@apply text-lg font-semibold;
