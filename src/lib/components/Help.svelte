@@ -22,8 +22,7 @@
 		<br />
 		Welcome to visPositions (the "Website"). This Privacy Policy explains how we collect, use, disclose,
 		and safeguard your personal information when you visit our Website. By using the Website, you consent
-		to the collection, use, and disclosure of your personal information as described in this Privacy
-		Policy.
+		to the collection, use, and disclosure of your personal information as described in this Privacy Policy.
 		<br />
 		<br />
 		<b>2. Information We Collect</b>
