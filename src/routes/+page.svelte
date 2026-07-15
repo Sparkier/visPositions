@@ -4,7 +4,6 @@
 	import PostFilters from '$lib/components/PostFilters.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
 	import type { Post as PostType } from '$lib/types';
-	import Device from 'svelte-device-info';
 
 	let search = $state('');
 	let keywords = $state<string[]>([]);
@@ -27,17 +26,15 @@
 <div class="flex h-full min-h-0 flex-col gap-2">
 	<Input name="search" placeholder="Search" bind:value={search} />
 	<div class="flex min-h-0 grow gap-2">
-		{#if !Device.isMobile}
-			<div class="flex w-[300px] shrink-0 flex-col gap-2">
-				<PostFilters
-					bind:keywords
-					bind:education
-					bind:industry
-					posts={page.data.posts}
-					{filteredPosts}
-				/>
-			</div>
-		{/if}
+		<div class="hidden md:flex w-[25%] min-w-[240px] max-w-[360px] shrink-0 flex-col gap-2">
+			<PostFilters
+				bind:keywords
+				bind:education
+				bind:industry
+				posts={page.data.posts}
+				{filteredPosts}
+			/>
+		</div>
 		<div class="flex flex-col gap-2 overflow-y-auto">
 			{#each filteredPosts as post}
 				<Post {post} />
