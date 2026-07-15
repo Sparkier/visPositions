@@ -54,50 +54,54 @@
 		]
 	});
 
-	const defaultSpec: VisualizationSpec = {
-		$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-		data: {
-			name: 'table'
-		},
-		params: [
-			{
-				name: 'selected',
-				select: { type: 'point', fields: ['title'] }
-			}
-		],
-		width: 'container',
-		mark: { type: 'bar', cursor: 'pointer' },
-		encoding: {
-			y: { field: 'title', type: 'nominal', axis: { title: null, minExtent: 100 } },
-			x: {
-				aggregate: 'count',
-				type: 'quantitative',
-				stack: null,
-				axis: { title: null }
+	function getSpec(title: string, minExtent: number, labelLimit?: number): VisualizationSpec {
+		return {
+			$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+			title: title,
+			data: {
+				name: 'table'
 			},
-			color: {
-				field: 'filtered',
-				type: 'nominal',
-				scale: {
-					domain: [false, true],
-					range: ['#ccc', markColor]
+			params: [
+				{
+					name: 'selected',
+					select: { type: 'point', fields: ['title'] }
+				}
+			],
+			width: 'container',
+			mark: { type: 'bar', cursor: 'pointer' },
+			encoding: {
+				y: {
+					field: 'title',
+					type: 'nominal',
+					axis: {
+						title: null,
+						minExtent: minExtent,
+						...(labelLimit !== undefined ? { labelLimit } : {})
+					}
 				},
-				legend: null
+				x: {
+					aggregate: 'count',
+					type: 'quantitative',
+					stack: null,
+					axis: { title: null }
+				},
+				color: {
+					field: 'filtered',
+					type: 'nominal',
+					scale: {
+						domain: [false, true],
+						range: ['#ccc', markColor]
+					},
+					legend: null
+				}
 			}
-		}
-	};
+		};
+	}
 
 	const vegaOptions = {
 		config: vegaTheme,
 		actions: false
 	};
-
-	function getSpec(title: string) {
-		return {
-			...defaultSpec,
-			title: title
-		};
-	}
 
 	function onselect(args: [string, unknown], type: string) {
 		if (args[1] && typeof args[1] === 'object' && 'title' in args[1]) {
@@ -123,7 +127,7 @@
 
 <div class="flex w-full flex-col gap-4">
 	<VegaLite
-		spec={getSpec('Job Type')}
+		spec={getSpec('Job Type', 50)}
 		data={industryData}
 		options={vegaOptions}
 		signalListeners={{
@@ -133,7 +137,7 @@
 		}}
 	/>
 	<VegaLite
-		spec={getSpec('Minimum Education')}
+		spec={getSpec('Minimum Education', 50)}
 		data={educationData}
 		options={vegaOptions}
 		signalListeners={{
@@ -143,7 +147,7 @@
 		}}
 	/>
 	<VegaLite
-		spec={getSpec('Keywords')}
+		spec={getSpec('Keywords', 120, 110)}
 		data={keywordData}
 		options={vegaOptions}
 		signalListeners={{
