@@ -1,0 +1,19 @@
+{
+	"minLines": 15,
+	"minTokens": 100,
+	"threshold": 0,
+	"format": ["typescript", "javascript", "svelte", "markup"],
+	"reporters": ["console", "time"],
+	"ignore": [
+		"**/node_modules/**",
+		"**/.svelte-kit/**",
+		"**/static/**",
+		"**/build/**",
+		"**/dist/**",
+		"src/routes/api/post/**",
+		"src/routes/api/webhooks/**",
+		"src/routes/api/newsletter/**",
+		"**/*.test.ts",
+		"supabase/**"
+	]
+}
