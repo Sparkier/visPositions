@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { RequestEvent } from '@sveltejs/kit';
 import { authGuard } from './hooks.server';
 
 describe('authGuard middleware', () => {
@@ -9,14 +10,15 @@ describe('authGuard middleware', () => {
 				safeGetSession: vi.fn().mockResolvedValue({ session: null, user: null })
 			},
 			url: { pathname: '/private/dashboard' }
-		} as any;
+		} as unknown as RequestEvent;
 
 		try {
 			await authGuard({ event, resolve });
 			expect.fail('Expected redirect to be thrown');
-		} catch (e: any) {
-			expect(e.status).toBe(303);
-			expect(e.location).toBe('/auth');
+		} catch (e) {
+			const err = e as { status: number; location: string };
+			expect(err.status).toBe(303);
+			expect(err.location).toBe('/auth');
 		}
 	});
 
@@ -29,14 +31,15 @@ describe('authGuard middleware', () => {
 					.mockResolvedValue({ session: { id: 'test_session' }, user: { id: 'test_user' } })
 			},
 			url: { pathname: '/auth' }
-		} as any;
+		} as unknown as RequestEvent;
 
 		try {
 			await authGuard({ event, resolve });
 			expect.fail('Expected redirect to be thrown');
-		} catch (e: any) {
-			expect(e.status).toBe(303);
-			expect(e.location).toBe('/private/post');
+		} catch (e) {
+			const err = e as { status: number; location: string };
+			expect(err.status).toBe(303);
+			expect(err.location).toBe('/private/post');
 		}
 	});
 
@@ -49,7 +52,7 @@ describe('authGuard middleware', () => {
 				safeGetSession: vi.fn().mockResolvedValue({ session, user })
 			},
 			url: { pathname: '/public/path' }
-		} as any;
+		} as unknown as RequestEvent;
 
 		const result = await authGuard({ event, resolve });
 
@@ -66,7 +69,7 @@ describe('authGuard middleware', () => {
 				safeGetSession: vi.fn().mockResolvedValue({ session: null, user: null })
 			},
 			url: { pathname: '/public/path' }
-		} as any;
+		} as unknown as RequestEvent;
 
 		const result = await authGuard({ event, resolve });
 
@@ -85,7 +88,7 @@ describe('authGuard middleware', () => {
 				safeGetSession: vi.fn().mockResolvedValue({ session, user })
 			},
 			url: { pathname: '/private/dashboard' }
-		} as any;
+		} as unknown as RequestEvent;
 
 		const result = await authGuard({ event, resolve });
 
