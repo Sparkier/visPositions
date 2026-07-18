@@ -18,6 +18,9 @@
 	let keywords = $state<number[]>([]);
 	let expiration_date = $state('');
 
+	let submitting = $state(false);
+	let error = $state('');
+
 	$effect(() => {
 		title = editing?.title || '';
 		description = editing?.description || '';
@@ -37,39 +40,63 @@
 	});
 
 	async function addPost() {
-		await fetch('/api/post', {
-			method: 'POST',
-			body: JSON.stringify({
-				title,
-				description,
-				contact,
-				industry,
-				education,
-				keywords,
-				expiration_date: new Date(expiration_date).toISOString()
-			})
-		});
-		title = '';
-		description = '';
-		contact = '';
-		updated();
+		submitting = true;
+		error = '';
+		try {
+			const response = await fetch('/api/post', {
+				method: 'POST',
+				body: JSON.stringify({
+					title,
+					description,
+					contact,
+					industry,
+					education,
+					keywords,
+					expiration_date: new Date(expiration_date).toISOString()
+				})
+			});
+			if (response.ok) {
+				title = '';
+				description = '';
+				contact = '';
+				updated();
+			} else {
+				error = 'Failed to submit the form. Please try again.';
+			}
+		} catch (e) {
+			error = 'A network error occurred. Please check your connection and try again.';
+		} finally {
+			submitting = false;
+		}
 	}
 
 	async function updatePost() {
-		await fetch(`/api/post/${editing?.id}`, {
-			method: 'PATCH',
-			body: JSON.stringify({
-				title,
-				description,
-				contact,
-				industry,
-				education,
-				keywords,
-				vetted: false,
-				expiration_date: new Date(expiration_date).toISOString()
-			})
-		});
-		updated();
+		submitting = true;
+		error = '';
+		try {
+			const response = await fetch(`/api/post/${editing?.id}`, {
+				method: 'PATCH',
+				body: JSON.stringify({
+					title,
+					description,
+					contact,
+					industry,
+					education,
+					keywords,
+					vetted: false,
+					expiration_date: new Date(expiration_date).toISOString()
+				})
+			});
+			if (response.ok) {
+				updated();
+			} else {
+				error = 'Failed to update the post. Please try again.';
+			}
+		} catch (e) {
+			error = 'A network error occurred. Please check your connection and try again.';
+		} finally {
+			submitting = false;
+		}
 	}
 </script>
 
@@ -122,18 +149,23 @@
 		</div>
 		<Toggle label="Industry Position" bind:checked={industry} />
 	</div>
-	<div class="flex justify-end gap-6">
-		<Button
-			disabled={!title || !description || !contact || !education || !expiration_date}
-			onclick={() => {
-				if (editing) {
-					updatePost();
-				} else {
-					addPost();
-				}
-			}}
-		>
-			{editing ? 'Update' : 'Create'}
-		</Button>
+	<div class="flex flex-col items-end gap-1">
+		<div class="flex justify-end gap-6">
+			<Button
+				disabled={submitting || !title || !description || !contact || !education || !expiration_date}
+				onclick={() => {
+					if (editing) {
+						updatePost();
+					} else {
+						addPost();
+					}
+				}}
+			>
+				{submitting ? (editing ? 'Updating...' : 'Creating...') : (editing ? 'Update' : 'Create')}
+			</Button>
+		</div>
+		{#if error}
+			<div class="text-red-500 text-sm text-right mt-1">{error}</div>
+		{/if}
 	</div>
 </div>
