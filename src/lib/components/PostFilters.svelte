@@ -136,7 +136,7 @@
 		{/if}
 	</div>
 
-	<div class="relative">
+	<div class="relative w-full">
 		<div class="sr-only">
 			<h3>Job Type</h3>
 			{#each jobTypes as type}
@@ -167,7 +167,7 @@
 		/>
 	</div>
 
-	<div class="relative">
+	<div class="relative w-full">
 		<div class="sr-only">
 			<h3>Minimum Education</h3>
 			{#each uniqueEducations as edu}
@@ -198,7 +198,7 @@
 		/>
 	</div>
 
-	<div class="relative">
+	<div class="relative w-full">
 		<div class="sr-only">
 			<h3>Keywords</h3>
 			{#each uniqueKeywords as kw}
