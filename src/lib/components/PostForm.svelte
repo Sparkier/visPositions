@@ -63,7 +63,7 @@
 			} else {
 				error = 'Failed to submit the form. Please try again.';
 			}
-		} catch (e) {
+		} catch {
 			error = 'A network error occurred. Please check your connection and try again.';
 		} finally {
 			submitting = false;
@@ -92,7 +92,7 @@
 			} else {
 				error = 'Failed to update the post. Please try again.';
 			}
-		} catch (e) {
+		} catch {
 			error = 'A network error occurred. Please check your connection and try again.';
 		} finally {
 			submitting = false;
@@ -152,7 +152,12 @@
 	<div class="flex flex-col items-end gap-1">
 		<div class="flex justify-end gap-6">
 			<Button
-				disabled={submitting || !title || !description || !contact || !education || !expiration_date}
+				disabled={submitting ||
+					!title ||
+					!description ||
+					!contact ||
+					!education ||
+					!expiration_date}
 				onclick={() => {
 					if (editing) {
 						updatePost();
@@ -161,7 +166,7 @@
 					}
 				}}
 			>
-				{submitting ? (editing ? 'Updating...' : 'Creating...') : (editing ? 'Update' : 'Create')}
+				{submitting ? (editing ? 'Updating...' : 'Creating...') : editing ? 'Update' : 'Create'}
 			</Button>
 		</div>
 		{#if error}
