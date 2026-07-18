@@ -36,25 +36,43 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 
 	const { title, description, contact, industry, education, keywords, expiration_date } = data;
 
-	if (title !== undefined && (!title || typeof title !== 'string' || title.trim().length === 0 || title.length > 255)) {
+	if (
+		title !== undefined &&
+		(!title || typeof title !== 'string' || title.trim().length === 0 || title.length > 255)
+	) {
 		throw error(400, 'Invalid title');
 	}
-	if (description !== undefined && (!description || typeof description !== 'string' || description.trim().length === 0 || description.length > 5000)) {
+	if (
+		description !== undefined &&
+		(!description ||
+			typeof description !== 'string' ||
+			description.trim().length === 0 ||
+			description.length > 5000)
+	) {
 		throw error(400, 'Invalid description');
 	}
-	if (contact !== undefined && (!contact || typeof contact !== 'string' || contact.trim().length === 0 || contact.length > 255)) {
+	if (
+		contact !== undefined &&
+		(!contact || typeof contact !== 'string' || contact.trim().length === 0 || contact.length > 255)
+	) {
 		throw error(400, 'Invalid contact');
 	}
 	if (industry !== undefined && typeof industry !== 'boolean') {
 		throw error(400, 'Invalid industry flag');
 	}
-	if (education !== undefined && !['none', 'undergraduate', 'graduate', 'phd'].includes(education)) {
+	if (
+		education !== undefined &&
+		!['none', 'undergraduate', 'graduate', 'phd'].includes(education)
+	) {
 		throw error(400, 'Invalid education level');
 	}
 	if (keywords !== undefined && !Array.isArray(keywords)) {
 		throw error(400, 'Invalid keywords format');
 	}
-	if (expiration_date !== undefined && (typeof expiration_date !== 'string' || isNaN(Date.parse(expiration_date)))) {
+	if (
+		expiration_date !== undefined &&
+		(typeof expiration_date !== 'string' || isNaN(Date.parse(expiration_date)))
+	) {
 		throw error(400, 'Invalid expiration date');
 	}
 

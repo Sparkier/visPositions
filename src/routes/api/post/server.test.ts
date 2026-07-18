@@ -8,7 +8,10 @@ describe('POST /api/post', () => {
 		});
 		const request = {
 			json: vi.fn().mockResolvedValue({
-				description: 'Desc', contact: 'Contact', industry: true, education: 'none'
+				description: 'Desc',
+				contact: 'Contact',
+				industry: true,
+				education: 'none'
 			})
 		};
 
@@ -26,7 +29,10 @@ describe('POST /api/post', () => {
 		});
 		const request = {
 			json: vi.fn().mockResolvedValue({
-				title: 'Title', contact: 'Contact', industry: true, education: 'none'
+				title: 'Title',
+				contact: 'Contact',
+				industry: true,
+				education: 'none'
 			})
 		};
 
@@ -44,7 +50,11 @@ describe('POST /api/post', () => {
 		});
 		const request = {
 			json: vi.fn().mockResolvedValue({
-				title: 'Title', description: 'Desc', contact: 'Contact', industry: true, education: 'invalid_edu'
+				title: 'Title',
+				description: 'Desc',
+				contact: 'Contact',
+				industry: true,
+				education: 'invalid_edu'
 			})
 		};
 
