@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { DELETE } from './+server';
+import { DELETE, PATCH } from './+server';
 import { error } from '@sveltejs/kit';
 
 // Need to mock SvelteKit error so it actually throws an error we can catch
@@ -11,6 +11,65 @@ vi.mock('@sveltejs/kit', () => ({
 	}),
 	text: vi.fn((message) => new Response(message))
 }));
+
+describe('PATCH /api/post/[id]', () => {
+	it('should throw a 400 error if title is empty or invalid', async () => {
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: { user: { email: 'test@example.com' } }
+		});
+		const request = {
+			json: vi.fn().mockResolvedValue({
+				title: ''
+			})
+		};
+
+		await expect(
+			PATCH({
+				locals: { safeGetSession: mockSafeGetSession },
+				params: { id: '1' },
+				request
+			} as unknown as Parameters<typeof PATCH>[0])
+		).rejects.toThrow('Invalid title');
+	});
+
+	it('should throw a 400 error if description is invalid', async () => {
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: { user: { email: 'test@example.com' } }
+		});
+		const request = {
+			json: vi.fn().mockResolvedValue({
+				description: 123
+			})
+		};
+
+		await expect(
+			PATCH({
+				locals: { safeGetSession: mockSafeGetSession },
+				params: { id: '1' },
+				request
+			} as unknown as Parameters<typeof PATCH>[0])
+		).rejects.toThrow('Invalid description');
+	});
+
+	it('should throw a 400 error if education is invalid', async () => {
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: { user: { email: 'test@example.com' } }
+		});
+		const request = {
+			json: vi.fn().mockResolvedValue({
+				education: 'middle_school'
+			})
+		};
+
+		await expect(
+			PATCH({
+				locals: { safeGetSession: mockSafeGetSession },
+				params: { id: '1' },
+				request
+			} as unknown as Parameters<typeof PATCH>[0])
+		).rejects.toThrow('Invalid education level');
+	});
+});
 
 describe('DELETE /api/post/[id]', () => {
 	it('should throw 404 when deleting a non-existent post', async () => {

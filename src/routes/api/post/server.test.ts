@@ -2,6 +2,70 @@ import { describe, it, expect, vi } from 'vitest';
 import { POST } from './+server';
 
 describe('POST /api/post', () => {
+	it('should throw a 400 error if title is missing or invalid', async () => {
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: { user: { email: 'test@example.com' } }
+		});
+		const request = {
+			json: vi.fn().mockResolvedValue({
+				description: 'Desc',
+				contact: 'Contact',
+				industry: true,
+				education: 'none'
+			})
+		};
+
+		await expect(
+			POST({
+				locals: { safeGetSession: mockSafeGetSession },
+				request
+			} as unknown as Parameters<typeof POST>[0])
+		).rejects.toMatchObject({ status: 400, body: { message: 'Invalid title' } });
+	});
+
+	it('should throw a 400 error if description is missing or invalid', async () => {
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: { user: { email: 'test@example.com' } }
+		});
+		const request = {
+			json: vi.fn().mockResolvedValue({
+				title: 'Title',
+				contact: 'Contact',
+				industry: true,
+				education: 'none'
+			})
+		};
+
+		await expect(
+			POST({
+				locals: { safeGetSession: mockSafeGetSession },
+				request
+			} as unknown as Parameters<typeof POST>[0])
+		).rejects.toMatchObject({ status: 400, body: { message: 'Invalid description' } });
+	});
+
+	it('should throw a 400 error if education is invalid', async () => {
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: { user: { email: 'test@example.com' } }
+		});
+		const request = {
+			json: vi.fn().mockResolvedValue({
+				title: 'Title',
+				description: 'Desc',
+				contact: 'Contact',
+				industry: true,
+				education: 'invalid_edu'
+			})
+		};
+
+		await expect(
+			POST({
+				locals: { safeGetSession: mockSafeGetSession },
+				request
+			} as unknown as Parameters<typeof POST>[0])
+		).rejects.toMatchObject({ status: 400, body: { message: 'Invalid education level' } });
+	});
+
 	it('should throw an error if post DB insertion fails', async () => {
 		const mockSupabase = {
 			from: vi.fn().mockReturnValue({
@@ -27,8 +91,8 @@ describe('POST /api/post', () => {
 				title: 'Test',
 				description: 'Desc',
 				contact: 'Contact',
-				industry: 'Tech',
-				education: 'BSc',
+				industry: true,
+				education: 'undergraduate',
 				keywords: []
 			})
 		};
@@ -69,8 +133,8 @@ describe('POST /api/post', () => {
 				title: 'Test',
 				description: 'Desc',
 				contact: 'Contact',
-				industry: 'Tech',
-				education: 'BSc',
+				industry: true,
+				education: 'undergraduate',
 				keywords: []
 			})
 		};
@@ -125,8 +189,8 @@ describe('POST /api/post', () => {
 				title: 'Test',
 				description: 'Desc',
 				contact: 'Contact',
-				industry: 'Tech',
-				education: 'BSc',
+				industry: true,
+				education: 'undergraduate',
 				keywords: ['keyword1']
 			})
 		};
