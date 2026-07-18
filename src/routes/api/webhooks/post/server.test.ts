@@ -65,4 +65,28 @@ describe('Post Webhook API', () => {
 		expect(response.status).toBe(200);
 		expect(data).toEqual({ success: true });
 	});
+
+	it('should return 500 and success: false if an error occurs during processing', async () => {
+		const request = new Request('http://localhost/api/webhooks/post', {
+			method: 'POST',
+			headers: {
+				Authorization: 'Bearer test_secret'
+			},
+			body: JSON.stringify({ title: 'Test', description: 'Test desc' })
+		});
+
+		// Mock request.json() to throw an error
+		request.json = vi.fn().mockRejectedValue(new Error('Simulated processing error'));
+
+		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
+		const data = await response.json();
+
+		expect(response.status).toBe(500);
+		expect(data).toEqual({ success: false });
+		expect(consoleErrorSpy).toHaveBeenCalledWith('Webhook error:', expect.any(Error));
+
+		consoleErrorSpy.mockRestore();
+	});
 });
