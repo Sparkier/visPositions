@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { POST } from './+server';
 
 // Mock env vars
@@ -169,7 +169,7 @@ describe('Google Sheets Webhook API', () => {
 		request.json = vi.fn().mockRejectedValue(new Error('Simulated JSON parsing error'));
 
 		// Suppress console.error during this test
-		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
 		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 		const data = await response.json();
@@ -181,5 +181,25 @@ describe('Google Sheets Webhook API', () => {
 		});
 
 		consoleSpy.mockRestore();
+	});
+
+	it('should return a generic 500 error without exposing internal details when an exception occurs', async () => {
+		// Create a mock request that will throw an exception during json() parsing
+		const request = {
+			headers: {
+				get: vi.fn().mockReturnValue('Bearer test_webhook_secret')
+			},
+			json: vi.fn().mockRejectedValue(new Error('Sensitive database connection string exposed!'))
+		};
+
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
+		const data = await response.json();
+
+		expect(response.status).toBe(500);
+		expect(data).toEqual({
+			error: 'Internal Server Error'
+		});
+		// Ensure that the detailed error message is not present in the response
+		expect(data.details).toBeUndefined();
 	});
 });
