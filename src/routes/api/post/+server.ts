@@ -14,10 +14,20 @@ export const POST = async ({ locals: { supabase, safeGetSession }, request }) =>
 	if (!title || typeof title !== 'string' || title.trim().length === 0 || title.length > 255) {
 		throw error(400, 'Invalid title');
 	}
-	if (!description || typeof description !== 'string' || description.trim().length === 0 || description.length > 5000) {
+	if (
+		!description ||
+		typeof description !== 'string' ||
+		description.trim().length === 0 ||
+		description.length > 5000
+	) {
 		throw error(400, 'Invalid description');
 	}
-	if (!contact || typeof contact !== 'string' || contact.trim().length === 0 || contact.length > 255) {
+	if (
+		!contact ||
+		typeof contact !== 'string' ||
+		contact.trim().length === 0 ||
+		contact.length > 255
+	) {
 		throw error(400, 'Invalid contact');
 	}
 	if (typeof industry !== 'boolean') {
@@ -29,7 +39,10 @@ export const POST = async ({ locals: { supabase, safeGetSession }, request }) =>
 	if (keywords && !Array.isArray(keywords)) {
 		throw error(400, 'Invalid keywords format');
 	}
-	if (expiration_date && (typeof expiration_date !== 'string' || isNaN(Date.parse(expiration_date)))) {
+	if (
+		expiration_date &&
+		(typeof expiration_date !== 'string' || isNaN(Date.parse(expiration_date)))
+	) {
 		throw error(400, 'Invalid expiration date');
 	}
 
