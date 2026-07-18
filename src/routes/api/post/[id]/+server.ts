@@ -34,6 +34,18 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 
 	const data = await request.json();
 
+	if (
+		(data.title !== undefined && typeof data.title !== 'string') ||
+		(data.description !== undefined && typeof data.description !== 'string') ||
+		(data.contact !== undefined && typeof data.contact !== 'string') ||
+		(data.industry !== undefined && typeof data.industry !== 'boolean') ||
+		(data.education !== undefined && typeof data.education !== 'string') ||
+		(data.expiration_date !== undefined && typeof data.expiration_date !== 'string') ||
+		(data.keywords !== undefined && !Array.isArray(data.keywords))
+	) {
+		throw error(400, 'Invalid input data');
+	}
+
 	// Start a transaction to update both post and keywords
 	// Always include expiration_date in the update
 	const updateData = {
