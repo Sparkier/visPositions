@@ -127,7 +127,7 @@
 
 <div class="flex w-full flex-col gap-4">
 	<VegaLite
-		spec={getSpec('Job Type', 120, 110)}
+		spec={getSpec('Job Type', 100, 90)}
 		data={industryData}
 		options={vegaOptions}
 		signalListeners={{
@@ -137,7 +137,7 @@
 		}}
 	/>
 	<VegaLite
-		spec={getSpec('Minimum Education', 120, 110)}
+		spec={getSpec('Minimum Education', 100, 90)}
 		data={educationData}
 		options={vegaOptions}
 		signalListeners={{
@@ -147,7 +147,7 @@
 		}}
 	/>
 	<VegaLite
-		spec={getSpec('Keywords', 120, 110)}
+		spec={getSpec('Keywords', 100, 90)}
 		data={keywordData}
 		options={vegaOptions}
 		signalListeners={{
