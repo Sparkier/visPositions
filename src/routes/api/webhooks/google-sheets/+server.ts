@@ -137,6 +137,6 @@ export const POST = async ({ request }) => {
 		return json({ success: true, insertedCount, skippedCount, errors });
 	} catch (error) {
 		console.error('Webhook error:', error);
-		return json({ error: 'Internal Server Error', details: String(error) }, { status: 500 });
+		return json({ error: 'Internal Server Error' }, { status: 500 });
 	}
 };
