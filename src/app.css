@@ -11,6 +11,19 @@
 }
 
 @layer base {
+	/*
+	 * Tailwind v4 changed the default border color from gray-200 to
+	 * currentColor. Restore the v3 default so bare `border` utilities keep
+	 * their light-gray color instead of rendering black.
+	 */
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		border-color: var(--color-gray-200, currentColor);
+	}
+
 	h1 {
 		@apply text-2xl font-bold;
 	}
