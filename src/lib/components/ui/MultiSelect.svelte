@@ -23,6 +23,8 @@
 
 	let detailsOpen = $state(false);
 
+	let valuesSet = $derived(new Set(values));
+
 	function updateValue(optionValue: string) {
 		if (values.includes(optionValue)) {
 			values = values.filter((v: string) => v !== optionValue);
@@ -105,7 +107,7 @@
 							</div>
 							<Checkbox
 								id={option.value}
-								checked={values.includes(option.value)}
+								checked={valuesSet.has(option.value)}
 								onchange={() => updateValue(option.value)}
 							/>
 						</label>
