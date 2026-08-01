@@ -13,7 +13,8 @@ import { createClient } from '@supabase/supabase-js';
 // can read or write it.
 const supabaseAdmin = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-export const SITE_URL = 'https://vispositions.com';
+/** Canonical domain — the apex 308-redirects here. */
+export const SITE_URL = 'https://www.vispositions.com';
 
 /** Scope the LinkedIn app is approved for. Posting to the org page needs this one. */
 export const LINKEDIN_SCOPE = 'w_organization_social';
