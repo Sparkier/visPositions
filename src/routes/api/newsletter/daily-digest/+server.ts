@@ -49,10 +49,11 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		const htmlBodyHeader = `<p>Here are the new positions posted on <a href="${siteUrl}">visPositions</a> in the last 24 hours:</p><ul>`;
 		const { postsText, linkedinText, postsHtmlItems } = posts.reduce(
 			(acc, post) => {
-				acc.postsText += `- ${post.title}\n   ${post.description?.substring(0, 100)}...\n   View: ${siteUrl}/jobs/${post.id}\n\n`;
+				const shortDesc = post.description ? post.description.substring(0, 100) : '';
+				acc.postsText += `- ${post.title}\n   ${shortDesc}...\n   View: ${siteUrl}/jobs/${post.id}\n\n`;
 				acc.linkedinText += `- ${post.title}\n`;
 				const safeTitle = escapeHtml(post.title);
-				const safeDesc = post.description ? escapeHtml(post.description.substring(0, 100)) : '';
+				const safeDesc = shortDesc ? escapeHtml(shortDesc) : '';
 				acc.postsHtmlItems += `<li><a href="${siteUrl}/jobs/${post.id}"><strong>${safeTitle}</strong></a><br/>${safeDesc}...</li>`;
 				return acc;
 			},
