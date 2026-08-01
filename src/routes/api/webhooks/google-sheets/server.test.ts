@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { POST } from './+server';
 import { createClient } from '@supabase/supabase-js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { POST } from './+server';
 
 // Mock env vars
 vi.mock('$env/static/private', () => ({
@@ -14,17 +14,20 @@ vi.mock('$env/static/public', () => ({
 
 // Mock supabase client
 vi.mock('@supabase/supabase-js', () => {
-	const mockClient = {
+	const mockSupabaseChain = {
 		from: vi.fn().mockReturnThis(),
 		select: vi.fn().mockReturnThis(),
 		eq: vi.fn().mockReturnThis(),
 		in: vi.fn().mockReturnThis(),
 		insert: vi.fn().mockReturnThis(),
 		single: vi.fn().mockResolvedValue({ data: { id: 1 }, error: null }),
-		maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+		maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+		then: vi.fn((resolve) => resolve({ data: null, error: null }))
 	};
 	return {
-		createClient: vi.fn().mockReturnValue(mockClient)
+		createClient: vi.fn().mockReturnValue(mockSupabaseChain),
+		// Export for testing
+		_mockSupabaseChain: mockSupabaseChain
 	};
 });
 
@@ -201,7 +204,7 @@ describe('Google Sheets Webhook API', () => {
 		});
 
 		// Suppress console.error during this test
-		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
 		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 		const data = await response.json();
@@ -236,7 +239,7 @@ describe('Google Sheets Webhook API', () => {
 		request.json = vi.fn().mockRejectedValue(new Error('Simulated JSON parsing error'));
 
 		// Suppress console.error during this test
-		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
 		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 		const data = await response.json();
@@ -248,5 +251,59 @@ describe('Google Sheets Webhook API', () => {
 		});
 
 		consoleSpy.mockRestore();
+	});
+
+	it('should skip inserting posts if they already exist in the database (deduplication)', async () => {
+		const request = new Request('http://localhost/api/webhooks/google-sheets', {
+			method: 'POST',
+			headers: { Authorization: 'Bearer test_webhook_secret' },
+			body: JSON.stringify([
+				{
+					title: 'Duplicate Post',
+					description: 'Develop awesome apps',
+					contact: 'duplicate@example.com',
+					industry: true,
+					education: 'BSc',
+					keywords: ['svelte']
+				},
+				{
+					title: 'New Post',
+					description: 'A brand new post',
+					contact: 'new@example.com',
+					industry: false,
+					education: 'MSc'
+				}
+			])
+		});
+
+		// Since the codebase uses an await on the chained result (e.g. .in().in()),
+		// we mock the final promise resolution. We also mock maybeSingle just in case
+		// the deduplication logic is reverted to use maybeSingle in the future.
+		const mockClient = createClient('dummy', 'dummy') as any;
+		const originalThen = mockClient.then;
+		mockClient.then = vi.fn().mockImplementation((resolve) =>
+			resolve({
+				data: [{ title: 'Duplicate Post', contact: 'duplicate@example.com' }],
+				error: null
+			})
+		);
+		mockClient.maybeSingle.mockResolvedValueOnce({
+			data: { id: 1, title: 'Duplicate Post', contact: 'duplicate@example.com' },
+			error: null
+		});
+
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(data).toEqual({
+			success: true,
+			insertedCount: 1, // Only the "New Post" should be inserted
+			skippedCount: 1, // The "Duplicate Post" should be skipped
+			errors: []
+		});
+
+		// Restore original mock behavior
+		mockClient.then = originalThen;
 	});
 });
