@@ -19,17 +19,17 @@
 
 	const keywordData = $derived({
 		table: [
-			...posts.flatMap((post) =>
+			...posts.map((post) =>
 				post.keyword.map((keyword) => {
 					return { title: keyword.title, filtered: false };
 				})
 			),
-			...filteredPosts.flatMap((post) =>
+			...filteredPosts.map((post) =>
 				post.keyword.map((keyword) => {
 					return { title: keyword.title, filtered: true };
 				})
 			)
-		]
+		].flat()
 	});
 
 	const educationData = $derived({

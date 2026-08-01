@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { POST } from './+server';
 
 // Mock env vars
@@ -157,30 +157,6 @@ describe('Google Sheets Webhook API', () => {
 			title: '(no title)',
 			error: 'Missing required fields (title, description, or contact)'
 		});
-	});
-
-	it('should return 500 if an internal error occurs (catch block)', async () => {
-		const request = new Request('http://localhost/api/webhooks/google-sheets', {
-			method: 'POST',
-			headers: { Authorization: 'Bearer test_webhook_secret' }
-		});
-
-		// Force request.json to throw an error
-		request.json = vi.fn().mockRejectedValue(new Error('Simulated JSON parsing error'));
-
-		// Suppress console.error during this test
-		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-
-		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
-		const data = await response.json();
-
-		expect(response.status).toBe(500);
-		expect(data).toEqual({
-			error: 'Internal Server Error',
-			details: 'Error: Simulated JSON parsing error'
-		});
-
-		consoleSpy.mockRestore();
 	});
 
 	it('should return a generic 500 error without exposing internal details when an exception occurs', async () => {

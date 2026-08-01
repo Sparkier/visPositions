@@ -1,6 +1,5 @@
 import { ADMIN_EMAIL } from '$env/static/private';
-import { error, json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { error, json, type RequestHandler } from '@sveltejs/kit';
 
 export const PATCH: RequestHandler = async ({ locals: { supabase, safeGetSession }, params }) => {
 	const { session } = await safeGetSession();
