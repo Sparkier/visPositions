@@ -209,7 +209,10 @@ describe('Google Sheets Webhook API', () => {
 				}
 			]
 		});
-		expect(consoleSpy).toHaveBeenCalledWith('Failed to create post:', { message: 'Test DB Error', code: 'P0001' });
+		expect(consoleSpy).toHaveBeenCalledWith('Failed to create post:', {
+			message: 'Test DB Error',
+			code: 'P0001'
+		});
 
 		consoleSpy.mockRestore();
 	});
