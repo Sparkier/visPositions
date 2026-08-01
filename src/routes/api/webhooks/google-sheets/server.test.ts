@@ -19,7 +19,16 @@ vi.mock('@supabase/supabase-js', () => {
 			select: vi.fn().mockReturnThis(),
 			eq: vi.fn().mockReturnThis(),
 			in: vi.fn().mockReturnThis(),
-			insert: vi.fn().mockReturnThis(),
+			insert: vi.fn().mockImplementation((payload) => {
+				const isArray = Array.isArray(payload);
+				return {
+					select: vi.fn().mockResolvedValue({
+						data: isArray ? payload.map((p, i) => ({ ...p, id: i + 1 })) : { ...payload, id: 1 },
+						error: null
+					}),
+					single: vi.fn().mockResolvedValue({ data: { id: 1 }, error: null })
+				};
+			}),
 			single: vi.fn().mockResolvedValue({ data: { id: 1 }, error: null }),
 			maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
 		})

@@ -55,6 +55,9 @@ export const POST = async ({ request }) => {
 			}
 		}
 
+		const postsToInsert = [];
+		const postKeywordsMap = new Map<string, string[]>();
+
 		for (const row of payload) {
 			const {
 				title,
@@ -76,8 +79,10 @@ export const POST = async ({ request }) => {
 				continue;
 			}
 
+			const uniqueKey = `${title}:::${contact}`;
+
 			// 1. O(1) Deduplication check via Set
-			if (existingPostsSet.has(`${title}:::${contact}`)) {
+			if (existingPostsSet.has(uniqueKey)) {
 				skippedCount++;
 				continue;
 			}
@@ -85,74 +90,115 @@ export const POST = async ({ request }) => {
 			// 2. Prepare Expiration Date
 			const finalExpirationDate = expiration_date || getDefaultExpirationDate().toISOString();
 
-			// 3. Insert Post
-			const { data: postData, error: postError } = await supabaseAdmin
+			// 3. Queue Post for Insertion
+			postsToInsert.push({
+				title,
+				description,
+				contact,
+				industry: industry === 'Industry' || industry === true,
+				education: education?.toLowerCase() || 'none',
+				creator: 'Google Sheets Webhook',
+				created_at: created_at ? new Date(created_at).toISOString() : new Date().toISOString(),
+				expiration_date: new Date(finalExpirationDate).toISOString()
+			});
+
+			existingPostsSet.add(uniqueKey);
+
+			if (keywords && Array.isArray(keywords) && keywords.length > 0) {
+				postKeywordsMap.set(uniqueKey, keywords);
+			}
+		}
+
+		if (postsToInsert.length > 0) {
+			const { data: insertedPosts, error: postError } = await supabaseAdmin
 				.from('post')
-				.insert({
-					title,
-					description,
-					contact,
-					industry: industry === 'Industry' || industry === true,
-					education: education?.toLowerCase() || 'none',
-					creator: 'Google Sheets Webhook',
-					created_at: created_at ? new Date(created_at).toISOString() : new Date().toISOString(),
-					expiration_date: new Date(finalExpirationDate).toISOString()
-				})
-				.select()
-				.single();
+				.insert(postsToInsert)
+				.select();
 
 			if (postError) {
-				console.error('Failed to create post:', postError);
-				errors.push({
-					title,
-					error: `Insert failed: ${postError.message} (code: ${postError.code})`
-				});
-				continue;
+				console.error('Failed to bulk insert posts:', postError);
+				// If bulk insert fails, we can't easily map errors to individual posts,
+				// so we report a general error.
+				return json(
+					{ error: 'Internal Server Error', details: `Bulk insert failed: ${postError.message}` },
+					{ status: 500 }
+				);
 			}
 
-			insertedCount++;
-			// Track newly inserted post in our deduplication set so we don't insert it again in this batch
-			existingPostsSet.add(`${title}:::${contact}`);
+			if (insertedPosts) {
+				insertedCount = insertedPosts.length;
 
-			// 4. Associate Keywords
-			if (keywords && Array.isArray(keywords) && keywords.length > 0) {
-				const { data: existingKeywords } = await supabaseAdmin
-					.from('keyword')
-					.select('id, title')
-					.in('title', keywords);
-
-				const keywordIdsToInsert = [];
-				const newKeywordsToInsert: string[] = [];
-
-				for (const kw of keywords) {
-					const found = existingKeywords?.find((ek) => ek.title.toLowerCase() === kw.toLowerCase());
-					if (found) {
-						keywordIdsToInsert.push(found.id);
-					} else {
-						newKeywordsToInsert.push(kw);
+				// 4. Associate Keywords (Bulk processing)
+				if (postKeywordsMap.size > 0) {
+					// Gather all unique keywords across all posts
+					const allKeywords = new Set<string>();
+					for (const kws of postKeywordsMap.values()) {
+						kws.forEach((kw) => allKeywords.add(kw));
 					}
-				}
 
-				if (newKeywordsToInsert.length > 0) {
-					const { data: newKws, error: kwError } = await supabaseAdmin
-						.from('keyword')
-						.insert(newKeywordsToInsert.map((kw) => ({ title: kw })))
-						.select();
+					const allKeywordsArray = Array.from(allKeywords);
 
-					if (!kwError && newKws) {
-						keywordIdsToInsert.push(...newKws.map((kw) => kw.id));
-					} else if (kwError) {
-						console.error('Failed to bulk insert keywords:', kwError);
+					if (allKeywordsArray.length > 0) {
+						const { data: existingKeywords } = await supabaseAdmin
+							.from('keyword')
+							.select('id, title')
+							.in('title', allKeywordsArray);
+
+						const existingKeywordMap = new Map<string, number>();
+						if (existingKeywords) {
+							existingKeywords.forEach((ek) => {
+								existingKeywordMap.set(ek.title.toLowerCase(), ek.id);
+							});
+						}
+
+						const newKeywordsToInsert: { title: string }[] = [];
+						const keywordTitleToIdMap = new Map<string, number>();
+
+						for (const kw of allKeywordsArray) {
+							const kwLower = kw.toLowerCase();
+							if (existingKeywordMap.has(kwLower)) {
+								keywordTitleToIdMap.set(kwLower, existingKeywordMap.get(kwLower)!);
+							} else {
+								newKeywordsToInsert.push({ title: kw });
+							}
+						}
+
+						if (newKeywordsToInsert.length > 0) {
+							const { data: newKws, error: kwError } = await supabaseAdmin
+								.from('keyword')
+								.insert(newKeywordsToInsert)
+								.select();
+
+							if (!kwError && newKws) {
+								newKws.forEach((kw) => {
+									keywordTitleToIdMap.set(kw.title.toLowerCase(), kw.id);
+								});
+							} else if (kwError) {
+								console.error('Failed to bulk insert keywords:', kwError);
+							}
+						}
+
+						const postKeywordsToInsert = [];
+						for (const post of insertedPosts) {
+							const uniqueKey = `${post.title}:::${post.contact}`;
+							const keywordsForPost = postKeywordsMap.get(uniqueKey);
+							if (keywordsForPost) {
+								for (const kw of keywordsForPost) {
+									const kwId = keywordTitleToIdMap.get(kw.toLowerCase());
+									if (kwId) {
+										postKeywordsToInsert.push({
+											post_id: post.id,
+											keyword_id: kwId
+										});
+									}
+								}
+							}
+						}
+
+						if (postKeywordsToInsert.length > 0) {
+							await supabaseAdmin.from('postkeyword').insert(postKeywordsToInsert);
+						}
 					}
-				}
-
-				if (keywordIdsToInsert.length > 0) {
-					await supabaseAdmin.from('postkeyword').insert(
-						keywordIdsToInsert.map((keywordId) => ({
-							post_id: postData.id,
-							keyword_id: keywordId
-						}))
-					);
 				}
 			}
 		}
