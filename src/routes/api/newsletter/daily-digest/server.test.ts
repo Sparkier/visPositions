@@ -56,4 +56,34 @@ describe('Daily Digest API', () => {
 		expect(response.status).toBe(401);
 		expect(data).toEqual({ message: 'Unauthorized' });
 	});
+
+	it('should return 200 with no new posts message if there are no new posts', async () => {
+		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+		const request = new Request('http://localhost/api/newsletter/daily-digest', {
+			method: 'POST',
+			headers: {
+				Authorization: 'Bearer test_secret_key'
+			}
+		});
+
+		const supabase = {
+			from: vi.fn().mockReturnThis(),
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			gte: vi.fn().mockReturnThis(),
+			order: vi.fn().mockResolvedValue({ data: [], error: null })
+		};
+
+		const response = await POST({ request, locals: { supabase } } as unknown as Parameters<
+			typeof POST
+		>[0]);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(data).toEqual({ message: 'No new posts to send.' });
+		expect(consoleSpy).toHaveBeenCalledWith('No newly vetted posts found in the last 24 hours.');
+
+		consoleSpy.mockRestore();
+	});
 });
