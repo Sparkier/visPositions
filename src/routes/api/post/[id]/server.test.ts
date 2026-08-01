@@ -69,6 +69,55 @@ describe('PATCH /api/post/[id]', () => {
 			} as unknown as Parameters<typeof PATCH>[0])
 		).rejects.toThrow('Invalid education level');
 	});
+
+	it('should successfully update a post', async () => {
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: { user: { email: 'test@example.com' } }
+		});
+
+		const mockEq4 = vi.fn().mockResolvedValue({ error: null });
+		const mockEq3 = vi.fn().mockReturnValue({ eq: mockEq4 });
+		const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq3 });
+
+		const mockEq5 = vi.fn().mockResolvedValue({ error: null });
+		const mockDelete = vi.fn().mockReturnValue({ eq: mockEq5 });
+
+		const mockInsert = vi.fn().mockResolvedValue({ error: null });
+
+		const mockFrom = vi.fn().mockImplementation((table) => {
+			if (table === 'post') {
+				return { update: mockUpdate };
+			}
+			if (table === 'postkeyword') {
+				return { delete: mockDelete, insert: mockInsert };
+			}
+		});
+
+		const mockSupabase = {
+			from: mockFrom
+		};
+
+		const request = {
+			json: vi.fn().mockResolvedValue({
+				title: 'Valid Title',
+				description: 'Valid description.',
+				contact: 'test@example.com',
+				industry: true,
+				education: 'none',
+				keywords: ['tech'],
+				expiration_date: '2025-12-31'
+			})
+		};
+
+		const res = await PATCH({
+			locals: { safeGetSession: mockSafeGetSession, supabase: mockSupabase },
+			params: { id: '1' },
+			request
+		} as unknown as Parameters<typeof PATCH>[0]);
+
+		expect(res.status).toBe(200);
+		expect(await res.text()).toBe('Post updated');
+	});
 });
 
 describe('DELETE /api/post/[id]', () => {
