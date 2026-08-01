@@ -2,6 +2,7 @@
 	import type { Post } from '$lib/types';
 	import vegaTheme, { markColor } from '$lib/vegaTheme';
 	import { VegaLite, type VisualizationSpec } from 'svelte-vega';
+	import { onMount } from 'svelte';
 
 	let {
 		keywords = $bindable([]),
@@ -103,6 +104,12 @@
 		actions: false
 	};
 
+	let isMounted = $state(false);
+
+	onMount(() => {
+		isMounted = true;
+	});
+
 	function onselect(args: [string, unknown], type: string) {
 		if (args[1] && typeof args[1] === 'object' && 'title' in args[1]) {
 			const elements = (args[1] as { title: string[] }).title;
@@ -126,34 +133,105 @@
 </script>
 
 <div class="flex w-full flex-col gap-4">
-	<VegaLite
-		spec={getSpec('Job Type', 100, 90)}
-		data={industryData}
-		options={vegaOptions}
-		signalListeners={{
-			selected: (name: string, value: unknown) => {
-				onselect([name, value], 'industry');
-			}
-		}}
-	/>
-	<VegaLite
-		spec={getSpec('Minimum Education', 100, 90)}
-		data={educationData}
-		options={vegaOptions}
-		signalListeners={{
-			selected: (name: string, value: unknown) => {
-				onselect([name, value], 'education');
-			}
-		}}
-	/>
-	<VegaLite
-		spec={getSpec('Keywords', 100, 90)}
-		data={keywordData}
-		options={vegaOptions}
-		signalListeners={{
-			selected: (name: string, value: unknown) => {
-				onselect([name, value], 'keyword');
-			}
-		}}
-	/>
+	{#if isMounted}
+		<VegaLite
+			spec={getSpec('Job Type', 100, 90)}
+			data={industryData}
+			options={vegaOptions}
+			signalListeners={{
+				selected: (name: string, value: unknown) => {
+					onselect([name, value], 'industry');
+				}
+			}}
+		/>
+	{:else}
+		<!-- Skeleton/Placeholder shell for Job Type -->
+		<div
+			class="flex h-[150px] w-full flex-col gap-3 rounded border border-gray-200 bg-white p-3 animate-pulse justify-center"
+		>
+			<div class="h-4 w-20 bg-gray-200 rounded"></div>
+			<div class="flex flex-col gap-2">
+				<div class="flex items-center gap-4">
+					<div class="w-24 h-3 bg-gray-200 rounded"></div>
+					<div class="h-6 bg-gray-200 rounded-sm" style="width: 60%"></div>
+				</div>
+				<div class="flex items-center gap-4">
+					<div class="w-24 h-3 bg-gray-200 rounded"></div>
+					<div class="h-6 bg-gray-100 rounded-sm" style="width: 40%"></div>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	{#if isMounted}
+		<VegaLite
+			spec={getSpec('Minimum Education', 100, 90)}
+			data={educationData}
+			options={vegaOptions}
+			signalListeners={{
+				selected: (name: string, value: unknown) => {
+					onselect([name, value], 'education');
+				}
+			}}
+		/>
+	{:else}
+		<!-- Skeleton/Placeholder shell for Minimum Education -->
+		<div
+			class="flex h-[180px] w-full flex-col gap-3 rounded border border-gray-200 bg-white p-3 animate-pulse justify-center"
+		>
+			<div class="h-4 w-32 bg-gray-200 rounded"></div>
+			<div class="flex flex-col gap-2">
+				<div class="flex items-center gap-4">
+					<div class="w-24 h-3 bg-gray-200 rounded"></div>
+					<div class="h-6 bg-gray-200 rounded-sm" style="width: 75%"></div>
+				</div>
+				<div class="flex items-center gap-4">
+					<div class="w-24 h-3 bg-gray-200 rounded"></div>
+					<div class="h-6 bg-gray-100 rounded-sm" style="width: 50%"></div>
+				</div>
+				<div class="flex items-center gap-4">
+					<div class="w-24 h-3 bg-gray-200 rounded"></div>
+					<div class="h-6 bg-gray-100 rounded-sm" style="width: 25%"></div>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	{#if isMounted}
+		<VegaLite
+			spec={getSpec('Keywords', 100, 90)}
+			data={keywordData}
+			options={vegaOptions}
+			signalListeners={{
+				selected: (name: string, value: unknown) => {
+					onselect([name, value], 'keyword');
+				}
+			}}
+		/>
+	{:else}
+		<!-- Skeleton/Placeholder shell for Keywords -->
+		<div
+			class="flex h-[220px] w-full flex-col gap-3 rounded border border-gray-200 bg-white p-3 animate-pulse justify-center"
+		>
+			<div class="h-4 w-16 bg-gray-200 rounded"></div>
+			<div class="flex flex-col gap-2">
+				<div class="flex items-center gap-4">
+					<div class="w-24 h-3 bg-gray-200 rounded"></div>
+					<div class="h-6 bg-gray-200 rounded-sm" style="width: 80%"></div>
+				</div>
+				<div class="flex items-center gap-4">
+					<div class="w-24 h-3 bg-gray-200 rounded"></div>
+					<div class="h-6 bg-gray-100 rounded-sm" style="width: 60%"></div>
+				</div>
+				<div class="flex items-center gap-4">
+					<div class="w-24 h-3 bg-gray-200 rounded"></div>
+					<div class="h-6 bg-gray-100 rounded-sm" style="width: 40%"></div>
+				</div>
+				<div class="flex items-center gap-4">
+					<div class="w-24 h-3 bg-gray-200 rounded"></div>
+					<div class="h-6 bg-gray-100 rounded-sm" style="width: 30%"></div>
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>
