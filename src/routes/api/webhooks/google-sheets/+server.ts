@@ -40,6 +40,7 @@ export const POST = async ({ request }) => {
 		);
 
 		const existingPostsSet = new Set<string>();
+		const allPostKeywordsToInsert: { post_id: number; keyword_id: number }[] = [];
 
 		if (titles.length > 0 && contacts.length > 0) {
 			const { data: existingPosts } = await supabaseAdmin
@@ -147,14 +148,18 @@ export const POST = async ({ request }) => {
 				}
 
 				if (keywordIdsToInsert.length > 0) {
-					await supabaseAdmin.from('postkeyword').insert(
-						keywordIdsToInsert.map((keywordId) => ({
+					allPostKeywordsToInsert.push(
+						...keywordIdsToInsert.map((keywordId) => ({
 							post_id: postData.id,
 							keyword_id: keywordId
 						}))
 					);
 				}
 			}
+		}
+
+		if (allPostKeywordsToInsert.length > 0) {
+			await supabaseAdmin.from('postkeyword').insert(allPostKeywordsToInsert);
 		}
 
 		return json({ success: true, insertedCount, skippedCount, errors });
