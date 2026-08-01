@@ -14,17 +14,20 @@ vi.mock('$env/static/public', () => ({
 
 import type { Mock } from 'vitest';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyMock = Mock<(...args: any[]) => any>;
+
 describe('supabase middleware', () => {
 	let event: RequestEvent;
-	let resolve: Mock<[event: RequestEvent], Promise<Response>>;
-	let mockGetSession: Mock;
-	let mockGetUser: Mock;
+	let resolve: AnyMock;
+	let mockGetSession: AnyMock;
+	let mockGetUser: AnyMock;
 
 	beforeEach(() => {
 		mockGetSession = vi.fn();
 		mockGetUser = vi.fn();
 
-		(createServerClient as unknown as Mock).mockReturnValue({
+		(createServerClient as unknown as AnyMock).mockReturnValue({
 			auth: {
 				getSession: mockGetSession,
 				getUser: mockGetUser
