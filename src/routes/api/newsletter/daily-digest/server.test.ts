@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { POST } from './+server';
 
 // Mock svelte kit error function
@@ -8,8 +8,7 @@ vi.mock('@sveltejs/kit', async () => {
 		...actual,
 		error: (status: number, message: string) => {
 			const err = new Error(message);
-			(err as any).status = status;
-			(err as any).body = { message };
+			Object.assign(err, { status, body: { message } });
 			return err;
 		}
 	};
@@ -95,10 +94,13 @@ describe('Daily Digest API', () => {
 				locals: { supabase: mockSupabase }
 			} as unknown as Parameters<typeof POST>[0]);
 			expect.fail('Expected POST to throw an error');
-		} catch (e: any) {
-			expect(e.status).toBe(500);
-			expect(e.body?.message).toBe('Internal Server Error');
-			expect(consoleSpy).toHaveBeenCalledWith('Error fetching vetted posts:', { message: 'DB Error' });
+		} catch (e: unknown) {
+			const err = e as { status: number; body?: { message: string } };
+			expect(err.status).toBe(500);
+			expect(err.body?.message).toBe('Internal Server Error');
+			expect(consoleSpy).toHaveBeenCalledWith('Error fetching vetted posts:', {
+				message: 'DB Error'
+			});
 			expect(consoleSpy).toHaveBeenCalledWith('Error in daily digest endpoint:', expect.any(Error));
 		}
 
