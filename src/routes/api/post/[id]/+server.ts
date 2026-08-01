@@ -87,14 +87,19 @@ export const PATCH = async ({ locals: { supabase, safeGetSession }, params, requ
 		expiration_date: data.expiration_date
 	};
 
-	const { error: postError } = await supabase
+	const { data: updatedPost, error: postError } = await supabase
 		.from('post')
 		.update(updateData)
 		.eq('id', params.id)
-		.eq('creator', session.user.email);
+		.eq('creator', session.user.email)
+		.select();
 
 	if (postError) {
 		throw error(500, 'Internal Server Error');
+	}
+
+	if (!updatedPost || updatedPost.length === 0) {
+		throw error(404, 'Not found or unauthorized');
 	}
 
 	// Delete existing keyword associations

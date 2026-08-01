@@ -69,6 +69,57 @@ describe('PATCH /api/post/[id]', () => {
 			} as unknown as Parameters<typeof PATCH>[0])
 		).rejects.toThrow('Invalid education level');
 	});
+	it('should throw 404 when updating a non-existent post or unauthorized post', async () => {
+		const mockSelect = vi.fn().mockResolvedValue({ data: [] });
+		const mockEq2 = vi.fn().mockReturnValue({ select: mockSelect });
+		const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
+		const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq1 });
+		const mockFrom = vi.fn().mockReturnValue({ update: mockUpdate });
+
+		const mockSupabase = {
+			from: mockFrom
+		};
+
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: {
+				user: {
+					email: 'test@example.com'
+				}
+			}
+		});
+
+		const locals = {
+			supabase: mockSupabase,
+			safeGetSession: mockSafeGetSession
+		};
+
+		const params = {
+			id: 'non-existent-id'
+		};
+
+		const request = {
+			json: vi.fn().mockResolvedValue({
+				title: 'Valid Title',
+				description: 'Valid description',
+				contact: 'Valid contact',
+				industry: true,
+				education: 'none',
+				keywords: [],
+				expiration_date: '2025-01-01'
+			})
+		};
+
+		await expect(
+			PATCH({
+				locals,
+				params,
+				request
+			} as unknown as Parameters<typeof PATCH>[0])
+		).rejects.toThrow('Not found or unauthorized');
+
+		// Verify that error was called with 404
+		expect(error).toHaveBeenCalledWith(404, 'Not found or unauthorized');
+	});
 });
 
 describe('DELETE /api/post/[id]', () => {
