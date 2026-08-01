@@ -34,6 +34,8 @@ jobs:
           echo "WEBHOOK_SECRET=dummy" >> .env
           echo "FROM_EMAIL=from@example.com" >> .env
           echo "LINKEDIN_ORGANIZATION_ID=dummy" >> .env
+          echo "LINKEDIN_CLIENT_ID=dummy" >> .env
+          echo "LINKEDIN_CLIENT_SECRET=dummy" >> .env
           echo "RESEND_AUDIENCE_ID=dummy" >> .env
           echo "SUPABASE_SERVICE_ROLE_KEY=dummy" >> .env
 
