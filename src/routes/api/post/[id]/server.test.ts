@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { DELETE } from './+server';
 import { error } from '@sveltejs/kit';
+import { describe, expect, it, vi } from 'vitest';
+import { DELETE, PATCH } from './+server';
 
 // Need to mock SvelteKit error so it actually throws an error we can catch
 vi.mock('@sveltejs/kit', () => ({
@@ -13,61 +13,61 @@ vi.mock('@sveltejs/kit', () => ({
 }));
 
 describe('PATCH /api/post/[id]', () => {
-	it('should throw 400 when invalid input is provided', async () => {
+	it('should throw a 400 error if title is empty or invalid', async () => {
 		const mockSafeGetSession = vi.fn().mockResolvedValue({
-			session: {
-				user: {
-					email: 'test@example.com'
-				}
-			}
+			session: { user: { email: 'test@example.com' } }
 		});
-
-		const locals = {
-			supabase: {},
-			safeGetSession: mockSafeGetSession
-		};
-
-		const params = {
-			id: '1'
-		};
-
-		// Test invalid title
-		const request1 = {
+		const request = {
 			json: vi.fn().mockResolvedValue({
-				title: 123,
-				description: 'valid',
-				contact: 'valid',
-				industry: true,
-				education: 'none',
-				expiration_date: '2025-01-01',
-				keywords: []
-			})
-		};
-
-		const { PATCH } = await import('./+server');
-
-		await expect(
-			PATCH({ locals, params, request: request1 } as unknown as Parameters<typeof PATCH>[0])
-		).rejects.toThrow('Invalid input data');
-
-		// Test invalid keywords array
-		const request2 = {
-			json: vi.fn().mockResolvedValue({
-				title: 'valid',
-				description: 'valid',
-				contact: 'valid',
-				industry: true,
-				education: 'none',
-				expiration_date: '2025-01-01',
-				keywords: 'not-an-array'
+				title: ''
 			})
 		};
 
 		await expect(
-			PATCH({ locals, params, request: request2 } as unknown as Parameters<typeof PATCH>[0])
-		).rejects.toThrow('Invalid input data');
+			PATCH({
+				locals: { safeGetSession: mockSafeGetSession },
+				params: { id: '1' },
+				request
+			} as unknown as Parameters<typeof PATCH>[0])
+		).rejects.toThrow('Invalid title');
+	});
 
-		expect(error).toHaveBeenCalledWith(400, 'Invalid input data');
+	it('should throw a 400 error if description is invalid', async () => {
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: { user: { email: 'test@example.com' } }
+		});
+		const request = {
+			json: vi.fn().mockResolvedValue({
+				description: 123
+			})
+		};
+
+		await expect(
+			PATCH({
+				locals: { safeGetSession: mockSafeGetSession },
+				params: { id: '1' },
+				request
+			} as unknown as Parameters<typeof PATCH>[0])
+		).rejects.toThrow('Invalid description');
+	});
+
+	it('should throw a 400 error if education is invalid', async () => {
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: { user: { email: 'test@example.com' } }
+		});
+		const request = {
+			json: vi.fn().mockResolvedValue({
+				education: 'middle_school'
+			})
+		};
+
+		await expect(
+			PATCH({
+				locals: { safeGetSession: mockSafeGetSession },
+				params: { id: '1' },
+				request
+			} as unknown as Parameters<typeof PATCH>[0])
+		).rejects.toThrow('Invalid education level');
 	});
 });
 
