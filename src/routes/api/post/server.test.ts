@@ -2,6 +2,19 @@ import { describe, it, expect, vi } from 'vitest';
 import { POST } from './+server';
 
 describe('POST /api/post', () => {
+	it('should throw a 401 error if session is null (unauthorized)', async () => {
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: null
+		});
+
+		await expect(
+			POST({
+				locals: { safeGetSession: mockSafeGetSession },
+				request: {}
+			} as unknown as Parameters<typeof POST>[0])
+		).rejects.toMatchObject({ status: 401, body: { message: 'Unauthorized' } });
+	});
+
 	it('should throw a 400 error if title is missing or invalid', async () => {
 		const mockSafeGetSession = vi.fn().mockResolvedValue({
 			session: { user: { email: 'test@example.com' } }
