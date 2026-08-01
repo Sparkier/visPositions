@@ -68,4 +68,20 @@ describe('Newsletter Subscribe API', () => {
 			message: 'Invalid email address provided.'
 		});
 	});
+
+	it('should return 200 and success message for valid email', async () => {
+		const request = new Request('http://localhost/api/newsletter/subscribe', {
+			method: 'POST',
+			body: JSON.stringify({ email: 'valid@example.com' })
+		});
+
+		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(data).toEqual({
+			success: true,
+			message: 'Successfully subscribed!'
+		});
+	});
 });
