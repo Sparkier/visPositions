@@ -10,12 +10,13 @@ import { json, error } from '@sveltejs/kit';
 import { Resend } from 'resend';
 import { escapeHtml } from '$lib/utils';
 import type { RequestHandler } from './$types';
+import { timingSafeStringEqual } from '$lib/server/auth';
 
 const resend = new Resend(RESEND_API_KEY);
 
 export const POST: RequestHandler = async ({ locals: { supabase }, request }) => {
 	const authHeader = request.headers.get('Authorization');
-	if (authHeader !== `Bearer ${DAILY_DIGEST_SECRET_KEY}`) {
+	if (!timingSafeStringEqual(`Bearer ${DAILY_DIGEST_SECRET_KEY}`, authHeader)) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
 
