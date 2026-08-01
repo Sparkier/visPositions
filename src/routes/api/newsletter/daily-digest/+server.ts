@@ -1,7 +1,7 @@
 import {
+	ADMIN_EMAIL,
 	DAILY_DIGEST_SECRET_KEY,
 	FROM_EMAIL,
-	LINKEDIN_ACCESS_TOKEN,
 	LINKEDIN_ORGANIZATION_ID,
 	RESEND_API_KEY,
 	RESEND_AUDIENCE_ID
@@ -9,14 +9,46 @@ import {
 import { json, error } from '@sveltejs/kit';
 import { Resend } from 'resend';
 import { escapeHtml } from '$lib/utils';
+import { getAccessToken, getReconnectUrl, getTokenStatus } from '$lib/server/linkedin';
 import type { RequestHandler } from './$types';
 
 const resend = new Resend(RESEND_API_KEY);
+
+/**
+ * Nudges the admin to reconnect. LinkedIn only grants refresh tokens to
+ * approved Marketing Developer Platform partners, so renewal is manual and
+ * this daily mail is what keeps it from being forgotten.
+ */
+async function sendTokenWarning(reason: string) {
+	try {
+		await resend.emails.send({
+			from: FROM_EMAIL,
+			to: ADMIN_EMAIL,
+			subject: 'visPositions: LinkedIn token needs renewing',
+			text:
+				`${reason}\n\n` +
+				`Reconnect here: ${getReconnectUrl()}\n\n` +
+				`Until then the daily digest email still goes out, but nothing is posted to LinkedIn.`
+		});
+	} catch (err) {
+		console.error('Could not send the LinkedIn token warning email:', err);
+	}
+}
 
 export const POST: RequestHandler = async ({ locals: { supabase }, request }) => {
 	const authHeader = request.headers.get('Authorization');
 	if (authHeader !== `Bearer ${DAILY_DIGEST_SECRET_KEY}`) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
+	}
+
+	// Checked before the no-new-posts return below, so quiet days still warn.
+	const tokenStatus = await getTokenStatus();
+	if (tokenStatus.needsRenewal) {
+		await sendTokenWarning(
+			tokenStatus.expired
+				? 'The LinkedIn access token has expired.'
+				: `The LinkedIn access token expires in ${tokenStatus.daysUntilExpiry} days.`
+		);
 	}
 
 	try {
@@ -102,13 +134,14 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		}
 
 		// Post to LinkedIn
-		if (LINKEDIN_ACCESS_TOKEN && LINKEDIN_ORGANIZATION_ID) {
+		const linkedinToken = getAccessToken(tokenStatus);
+		if (linkedinToken && LINKEDIN_ORGANIZATION_ID) {
 			try {
 				const linkedinRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						Authorization: `Bearer ${LINKEDIN_ACCESS_TOKEN}`
+						Authorization: `Bearer ${linkedinToken}`
 					},
 					body: JSON.stringify({
 						author: `urn:li:organization:${LINKEDIN_ORGANIZATION_ID}`,
@@ -130,6 +163,17 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 				if (!linkedinRes.ok) {
 					const errorText = await linkedinRes.text();
 					console.error(`Error posting to LinkedIn (${linkedinRes.status}):`, errorText);
+
+					// A rejected token can also mean early revocation, which the
+					// expiry check above would not have caught.
+					if (
+						(linkedinRes.status === 401 || linkedinRes.status === 403) &&
+						!tokenStatus.needsRenewal
+					) {
+						await sendTokenWarning(
+							`LinkedIn rejected the access token (HTTP ${linkedinRes.status}) while posting the daily digest.`
+						);
+					}
 				} else {
 					console.log('Successfully posted daily digest to LinkedIn.');
 				}
