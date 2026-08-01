@@ -279,6 +279,7 @@ describe('Google Sheets Webhook API', () => {
 		// Since the codebase uses an await on the chained result (e.g. .in().in()),
 		// we mock the final promise resolution. We also mock maybeSingle just in case
 		// the deduplication logic is reverted to use maybeSingle in the future.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const mockClient = createClient('dummy', 'dummy') as any;
 		const originalThen = mockClient.then;
 		mockClient.then = vi.fn().mockImplementation((resolve) =>
