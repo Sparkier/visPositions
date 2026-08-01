@@ -74,10 +74,11 @@ describe('PATCH /api/post/[id]', () => {
 describe('DELETE /api/post/[id]', () => {
 	it('should throw 404 when deleting a non-existent post', async () => {
 		// Create a mock chain for supabase
-		const mockEq2 = vi.fn().mockResolvedValue({ data: [] });
+		const mockSelect = vi.fn().mockResolvedValue({ data: [], error: null });
+		const mockEq2 = vi.fn().mockReturnValue({ select: mockSelect });
 		const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
-		const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
-		const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
+		const mockDelete = vi.fn().mockReturnValue({ eq: mockEq1 });
+		const mockFrom = vi.fn().mockReturnValue({ delete: mockDelete });
 
 		const mockSupabase = {
 			from: mockFrom
