@@ -1,6 +1,42 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
-import { authGuard } from './hooks.server';
+import { authGuard, supabase } from './hooks.server';
+
+vi.mock('$env/static/public', () => ({
+	PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
+	PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key'
+}));
+
+vi.mock('@supabase/ssr', () => ({
+	createServerClient: vi.fn().mockImplementation(() => {
+		return {
+			auth: {
+				getSession: vi.fn().mockResolvedValue({ data: { session: null } })
+			}
+		};
+	})
+}));
+
+describe('supabase middleware', () => {
+	it('safeGetSession returns { session: null, user: null } when no session is found', async () => {
+		const resolve = vi.fn().mockResolvedValue(new Response());
+
+		const mockCookies = {
+			getAll: vi.fn().mockReturnValue([]),
+			set: vi.fn()
+		};
+
+		const event = {
+			locals: {},
+			cookies: mockCookies
+		} as unknown as RequestEvent;
+
+		await supabase({ event, resolve });
+
+		const result = await event.locals.safeGetSession();
+		expect(result).toEqual({ session: null, user: null });
+	});
+});
 
 describe('authGuard middleware', () => {
 	it('redirects unauthenticated users from private paths to /auth', async () => {
