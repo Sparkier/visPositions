@@ -120,7 +120,9 @@ describe('Newsletter Subscribe API', () => {
 			body: JSON.stringify({ email: 'valid@example.com' })
 		});
 
-		await expect(POST({ request } as unknown as Parameters<typeof POST>[0])).rejects.toThrow('Failed to subscribe.');
+		await expect(POST({ request } as unknown as Parameters<typeof POST>[0])).rejects.toThrow(
+			'Failed to subscribe.'
+		);
 		expect(error).toHaveBeenCalledWith(500, 'Failed to subscribe.');
 	});
 });
