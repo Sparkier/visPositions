@@ -33,9 +33,14 @@ describe('Google Sheets Webhook API', () => {
 		vi.clearAllMocks();
 
 		// Reset the default single mock implementation
-		const mockClient = vi.mocked(createClient).mock.results[0]?.value;
-		if (mockClient) {
-			mockClient.single.mockResolvedValue({ data: { id: 1 }, error: null });
+		const mockClient = vi.mocked(createClient) as unknown as () => {
+			single: {
+				mockResolvedValue: (arg: unknown) => void;
+				mockResolvedValueOnce: (arg: unknown) => void;
+			};
+		};
+		if (mockClient && mockClient()) {
+			mockClient().single.mockResolvedValue({ data: { id: 1 }, error: null });
 		}
 	});
 
@@ -185,7 +190,11 @@ describe('Google Sheets Webhook API', () => {
 		});
 
 		// Mock the single method to return an error for this test
-		const mockClient = vi.mocked(createClient)();
+		const mockClient = (
+			vi.mocked(createClient) as unknown as () => {
+				single: { mockResolvedValueOnce: (arg: unknown) => void };
+			}
+		)();
 		mockClient.single.mockResolvedValueOnce({
 			data: null,
 			error: { message: 'Test DB Error', code: 'P0001' }
