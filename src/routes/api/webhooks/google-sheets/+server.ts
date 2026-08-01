@@ -27,6 +27,34 @@ export const POST = async ({ request }) => {
 		let skippedCount = 0;
 		const errors: { title: string; error: string }[] = [];
 
+		// Pre-fetch all potentially matching posts to eliminate N+1 queries
+		const titles = Array.from(
+			new Set(
+				payload.map((r: { title?: string }) => r.title).filter((t): t is string => Boolean(t))
+			)
+		);
+		const contacts = Array.from(
+			new Set(
+				payload.map((r: { contact?: string }) => r.contact).filter((c): c is string => Boolean(c))
+			)
+		);
+
+		const existingPostsSet = new Set<string>();
+
+		if (titles.length > 0 && contacts.length > 0) {
+			const { data: existingPosts } = await supabaseAdmin
+				.from('post')
+				.select('title, contact')
+				.in('title', titles)
+				.in('contact', contacts);
+
+			if (existingPosts) {
+				for (const post of existingPosts) {
+					existingPostsSet.add(`${post.title}:::${post.contact}`);
+				}
+			}
+		}
+
 		for (const row of payload) {
 			const {
 				title,
@@ -48,15 +76,8 @@ export const POST = async ({ request }) => {
 				continue;
 			}
 
-			// 1. Deduplication check via title + contact
-			const { data: existingPost } = await supabaseAdmin
-				.from('post')
-				.select('id')
-				.eq('title', title)
-				.eq('contact', contact)
-				.maybeSingle();
-
-			if (existingPost) {
+			// 1. O(1) Deduplication check via Set
+			if (existingPostsSet.has(`${title}:::${contact}`)) {
 				skippedCount++;
 				continue;
 			}
@@ -90,6 +111,8 @@ export const POST = async ({ request }) => {
 			}
 
 			insertedCount++;
+			// Track newly inserted post in our deduplication set so we don't insert it again in this batch
+			existingPostsSet.add(`${title}:::${contact}`);
 
 			// 4. Associate Keywords
 			if (keywords && Array.isArray(keywords) && keywords.length > 0) {
