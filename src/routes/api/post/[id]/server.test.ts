@@ -72,6 +72,26 @@ describe('PATCH /api/post/[id]', () => {
 });
 
 describe('DELETE /api/post/[id]', () => {
+	it('should throw 401 when deleting a post without a session', async () => {
+		const mockSafeGetSession = vi.fn().mockResolvedValue({
+			session: null
+		});
+
+		const locals = {
+			safeGetSession: mockSafeGetSession
+		};
+
+		const params = {
+			id: 'some-id'
+		};
+
+		await expect(
+			DELETE({ locals, params } as unknown as Parameters<typeof DELETE>[0])
+		).rejects.toThrow('Unauthorized');
+
+		expect(error).toHaveBeenCalledWith(401, 'Unauthorized');
+	});
+
 	it('should throw 404 when deleting a non-existent post', async () => {
 		// Create a mock chain for supabase
 		const mockEq2 = vi.fn().mockResolvedValue({ data: [] });
