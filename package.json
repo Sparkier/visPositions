@@ -45,7 +45,6 @@
 		"@vercel/analytics": "^1.6.1",
 		"lucide-svelte": "^0.469.0",
 		"resend": "^4.1.2",
-		"svelte-device-info": "^1.0.6",
 		"svelte-vega": "^4.0.0"
 	}
 }
