@@ -8,7 +8,8 @@ import {
 } from '$env/static/private';
 import { json, error } from '@sveltejs/kit';
 import { Resend } from 'resend';
-import { escapeHtml, safeCompare } from '$lib/utils';
+import { escapeHtml } from '$lib/utils';
+import { safeCompare } from '$lib/server/utils';
 import type { RequestHandler } from './$types';
 
 const resend = new Resend(RESEND_API_KEY);

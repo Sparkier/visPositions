@@ -2,7 +2,8 @@ import { json } from '@sveltejs/kit';
 import { WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { createClient } from '@supabase/supabase-js';
-import { getDefaultExpirationDate, safeCompare } from '$lib/utils';
+import { getDefaultExpirationDate } from '$lib/utils';
+import { safeCompare } from '$lib/server/utils';
 
 // Use the service role key to bypass RLS policies.
 // The anon key is subject to RLS and will silently block inserts

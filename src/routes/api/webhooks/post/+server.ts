@@ -1,7 +1,7 @@
 import { ADMIN_EMAIL, FROM_EMAIL, RESEND_API_KEY, WEBHOOK_SECRET } from '$env/static/private';
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
-import { safeCompare } from '$lib/utils';
+import { safeCompare } from '$lib/server/utils';
 
 const resend = new Resend(RESEND_API_KEY);
 
