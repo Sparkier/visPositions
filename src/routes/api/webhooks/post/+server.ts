@@ -1,13 +1,14 @@
 import { ADMIN_EMAIL, FROM_EMAIL, RESEND_API_KEY, WEBHOOK_SECRET } from '$env/static/private';
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
+import { timingSafeStringEqual } from '$lib/server/auth';
 
 const resend = new Resend(RESEND_API_KEY);
 
 export async function POST({ request }) {
 	const authHeader = request.headers.get('Authorization');
 
-	if (!authHeader || authHeader !== `Bearer ${WEBHOOK_SECRET}`) {
+	if (!timingSafeStringEqual(`Bearer ${WEBHOOK_SECRET}`, authHeader)) {
 		return new Response('Unauthorized', { status: 401 });
 	}
 
