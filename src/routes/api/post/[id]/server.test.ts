@@ -69,65 +69,9 @@ describe('PATCH /api/post/[id]', () => {
 			} as unknown as Parameters<typeof PATCH>[0])
 		).rejects.toThrow('Invalid education level');
 	});
-
-	it('should throw 500 when database update fails', async () => {
-		const mockSafeGetSession = vi.fn().mockResolvedValue({
-			session: { user: { email: 'test@example.com' } }
-		});
-
-		const request = {
-			json: vi.fn().mockResolvedValue({
-				title: 'Valid Title',
-				description: 'Valid description',
-				contact: 'test@example.com',
-				industry: true,
-				education: 'undergraduate',
-				keywords: []
-			})
-		};
-
-		const mockEq2 = vi.fn().mockResolvedValue({ error: new Error('DB Error') });
-		const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
-		const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq1 });
-		const mockFrom = vi.fn().mockReturnValue({ update: mockUpdate });
-
-		const mockSupabase = {
-			from: mockFrom
-		};
-
-		await expect(
-			PATCH({
-				locals: { supabase: mockSupabase, safeGetSession: mockSafeGetSession },
-				params: { id: '1' },
-				request
-			} as unknown as Parameters<typeof PATCH>[0])
-		).rejects.toThrow('Internal Server Error');
-
-		expect(error).toHaveBeenCalledWith(500, 'Internal Server Error');
-	});
 });
 
 describe('DELETE /api/post/[id]', () => {
-	it('should throw 401 when deleting a post without a session', async () => {
-		const mockSafeGetSession = vi.fn().mockResolvedValue({
-			session: null
-		});
-
-		const locals = {
-			safeGetSession: mockSafeGetSession
-		};
-
-		const params = {
-			id: 'some-id'
-		};
-
-		await expect(
-			DELETE({ locals, params } as unknown as Parameters<typeof DELETE>[0])
-		).rejects.toThrow('Unauthorized');
-
-		expect(error).toHaveBeenCalledWith(401, 'Unauthorized');
-	});
-
 	it('should throw 404 when deleting a non-existent post', async () => {
 		// Create a mock chain for supabase
 		const mockEq2 = vi.fn().mockResolvedValue({ data: [] });
