@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import type { KeyboardEventHandler, MouseEventHandler } from 'svelte/elements';
 	import { fade } from 'svelte/transition';
 	import { twMerge } from 'tailwind-merge';
@@ -9,7 +10,7 @@
 		onkeydown,
 		class: classNames = ''
 	}: {
-		children: import('svelte').Snippet;
+		children: Snippet;
 		onclose: MouseEventHandler<HTMLDivElement>;
 		onkeydown?: KeyboardEventHandler<Window>;
 		class?: string;
