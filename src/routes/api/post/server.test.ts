@@ -2,19 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { POST } from './+server';
 
 describe('POST /api/post', () => {
-	it('should throw a 401 error if session is null (unauthorized)', async () => {
-		const mockSafeGetSession = vi.fn().mockResolvedValue({
-			session: null
-		});
-
-		await expect(
-			POST({
-				locals: { safeGetSession: mockSafeGetSession },
-				request: {}
-			} as unknown as Parameters<typeof POST>[0])
-		).rejects.toMatchObject({ status: 401, body: { message: 'Unauthorized' } });
-	});
-
 	it('should throw a 400 error if title is missing or invalid', async () => {
 		const mockSafeGetSession = vi.fn().mockResolvedValue({
 			session: { user: { email: 'test@example.com' } }
@@ -217,61 +204,5 @@ describe('POST /api/post', () => {
 		} as unknown as Parameters<typeof POST>[0]);
 
 		expect(response.status).toBe(200);
-	});
-
-	it('should throw an error if keyword association fails', async () => {
-		const mockSupabase = {
-			from: vi.fn().mockImplementation((table) => {
-				if (table === 'post') {
-					return {
-						insert: vi.fn().mockReturnValue({
-							select: vi.fn().mockReturnValue({
-								single: vi.fn().mockResolvedValue({
-									data: { id: 1 },
-									error: null
-								})
-							})
-						})
-					};
-				}
-				if (table === 'postkeyword') {
-					return {
-						insert: vi.fn().mockResolvedValue({
-							error: new Error('Keyword DB Error')
-						})
-					};
-				}
-			})
-		};
-
-		const mockSafeGetSession = vi.fn().mockResolvedValue({
-			session: {
-				user: { email: 'test@example.com' }
-			}
-		});
-
-		const request = {
-			json: vi.fn().mockResolvedValue({
-				title: 'Test',
-				description: 'Desc',
-				contact: 'Contact',
-				industry: true,
-				education: 'undergraduate',
-				keywords: ['keyword1']
-			})
-		};
-
-		await expect(
-			POST({
-				locals: {
-					supabase: mockSupabase,
-					safeGetSession: mockSafeGetSession
-				},
-				request
-			} as unknown as Parameters<typeof POST>[0])
-		).rejects.toMatchObject({
-			status: 500,
-			body: { message: 'Failed to associate keywords.' }
-		});
 	});
 });

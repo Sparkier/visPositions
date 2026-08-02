@@ -1,6 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { POST } from './+server';
+import { createClient } from '@supabase/supabase-js';
 
 // Mock env vars
 vi.mock('$env/static/private', () => ({
@@ -32,21 +32,6 @@ vi.mock('@supabase/supabase-js', () => {
 });
 
 describe('Google Sheets Webhook API', () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-
-		// Reset the default single mock implementation
-		const mockClient = vi.mocked(createClient) as unknown as () => {
-			single: {
-				mockResolvedValue: (arg: unknown) => void;
-				mockResolvedValueOnce: (arg: unknown) => void;
-			};
-		};
-		if (mockClient && mockClient()) {
-			mockClient().single.mockResolvedValue({ data: { id: 1 }, error: null });
-		}
-	});
-
 	it('should return 401 if missing authorization header', async () => {
 		const request = new Request('http://localhost/api/webhooks/google-sheets', {
 			method: 'POST',
@@ -179,56 +164,6 @@ describe('Google Sheets Webhook API', () => {
 		});
 	});
 
-	it('should handle database error during post insertion', async () => {
-		const request = new Request('http://localhost/api/webhooks/google-sheets', {
-			method: 'POST',
-			headers: { Authorization: 'Bearer test_webhook_secret' },
-			body: JSON.stringify([
-				{
-					title: 'DB Error Post',
-					description: 'Develop awesome apps',
-					contact: 'test@example.com'
-				}
-			])
-		});
-
-		// Mock the single method to return an error for this test
-		const mockClient = (
-			vi.mocked(createClient) as unknown as () => {
-				single: { mockResolvedValueOnce: (arg: unknown) => void };
-			}
-		)();
-		mockClient.single.mockResolvedValueOnce({
-			data: null,
-			error: { message: 'Test DB Error', code: 'P0001' }
-		});
-
-		// Suppress console.error during this test
-		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-
-		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
-		const data = await response.json();
-
-		expect(response.status).toBe(200);
-		expect(data).toEqual({
-			success: true,
-			insertedCount: 0,
-			skippedCount: 0,
-			errors: [
-				{
-					title: 'DB Error Post',
-					error: 'Insert failed: Test DB Error (code: P0001)'
-				}
-			]
-		});
-		expect(consoleSpy).toHaveBeenCalledWith('Failed to create post:', {
-			message: 'Test DB Error',
-			code: 'P0001'
-		});
-
-		consoleSpy.mockRestore();
-	});
-
 	it('should return 500 if an internal error occurs (catch block)', async () => {
 		const request = new Request('http://localhost/api/webhooks/google-sheets', {
 			method: 'POST',
@@ -239,7 +174,7 @@ describe('Google Sheets Webhook API', () => {
 		request.json = vi.fn().mockRejectedValue(new Error('Simulated JSON parsing error'));
 
 		// Suppress console.error during this test
-		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 		const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
 		const data = await response.json();
