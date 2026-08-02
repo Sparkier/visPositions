@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type Snippet } from 'svelte';
+	import type { Snippet } from 'svelte';
 	import type { KeyboardEventHandler, MouseEventHandler } from 'svelte/elements';
 	import { fade } from 'svelte/transition';
 	import { twMerge } from 'tailwind-merge';
