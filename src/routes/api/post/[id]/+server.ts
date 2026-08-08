@@ -7,19 +7,19 @@ export const DELETE = async ({ locals: { supabase, safeGetSession }, params }) =
 		throw error(401, 'Unauthorized');
 	}
 
-	const { data: posts } = await supabase
+	const { error: deleteError, data } = await supabase
 		.from('post')
-		.select()
+		.delete()
 		.eq('id', params.id)
-		.eq('creator', session.user.email);
-	if (!posts?.length) {
-		throw error(404, 'Not found or unauthorized');
-	}
-
-	const { error: deleteError } = await supabase.from('post').delete().eq('id', params.id);
+		.eq('creator', session.user.email)
+		.select();
 
 	if (deleteError) {
 		throw error(500, 'Internal Server Error');
+	}
+
+	if (!data?.length) {
+		throw error(404, 'Not found or unauthorized');
 	}
 
 	return text('Post deleted');
