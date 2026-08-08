@@ -3,6 +3,7 @@ import { WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { createClient } from '@supabase/supabase-js';
 import { getDefaultExpirationDate } from '$lib/utils';
+import crypto from 'node:crypto';
 
 // Use the service role key to bypass RLS policies.
 // The anon key is subject to RLS and will silently block inserts
@@ -12,7 +13,17 @@ const supabaseAdmin = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KE
 export const POST = async ({ request }) => {
 	const authHeader = request.headers.get('Authorization');
 
-	if (!authHeader || authHeader !== `Bearer ${WEBHOOK_SECRET}`) {
+	if (!authHeader) {
+		return new Response('Unauthorized', { status: 401 });
+	}
+
+	const expectedBuf = Buffer.from(`Bearer ${WEBHOOK_SECRET}`);
+	const providedBuf = Buffer.from(authHeader);
+
+	if (
+		expectedBuf.length !== providedBuf.length ||
+		!crypto.timingSafeEqual(expectedBuf, providedBuf)
+	) {
 		return new Response('Unauthorized', { status: 401 });
 	}
 
