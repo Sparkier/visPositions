@@ -157,7 +157,17 @@ describe('Daily Digest API', () => {
 	it('warns immediately when LinkedIn rejects the token', async () => {
 		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
 		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('revoked', { status: 401 })));
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockImplementation((url: string) => {
+				if (typeof url === 'string' && url.includes('api.resend.com')) {
+					return Promise.resolve(
+						new Response(JSON.stringify({ id: 'test_broadcast_id' }), { status: 200 })
+					);
+				}
+				return Promise.resolve(new Response('revoked', { status: 401 }));
+			})
+		);
 
 		await callDigest(
 			digestRequest(),
@@ -176,6 +186,133 @@ describe('Daily Digest API', () => {
 
 		vi.unstubAllGlobals();
 		consoleLog.mockRestore();
+		consoleError.mockRestore();
+	});
+
+	it('sends daily digest broadcast directly via Resend API with correct payload and lowercase unsubscribe tag', async () => {
+		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+		const fetchSpy = vi.fn().mockImplementation((url: string) => {
+			if (typeof url === 'string' && url.includes('api.resend.com')) {
+				return Promise.resolve(
+					new Response(JSON.stringify({ id: 'test_broadcast_123' }), { status: 200 })
+				);
+			}
+			return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+		});
+		vi.stubGlobal('fetch', fetchSpy);
+
+		const response = await callDigest(
+			digestRequest(),
+			supabaseWithPosts([
+				{
+					id: 42,
+					title: 'Senior Data Visualization Engineer',
+					description: 'Build interactive dashboards using Svelte and D3',
+					created_at: new Date().toISOString()
+				}
+			])
+		);
+
+		const data = await response.json();
+		expect(response.status).toBe(200);
+		expect(data).toEqual({ success: true, message: 'Digest processed.' });
+
+		// Verify Resend Broadcast creation fetch call
+		const resendCalls = fetchSpy.mock.calls.filter(
+			(call) => typeof call[0] === 'string' && call[0].includes('api.resend.com')
+		);
+		expect(resendCalls.length).toBeGreaterThanOrEqual(2);
+
+		const [createUrl, createOptions] = resendCalls[0];
+		expect(createUrl).toBe('https://api.resend.com/broadcasts');
+		expect(createOptions.method).toBe('POST');
+		expect(createOptions.headers).toEqual({
+			Authorization: 'Bearer test_api_key',
+			'Content-Type': 'application/json'
+		});
+
+		const body = JSON.parse(createOptions.body);
+		expect(body.from).toBe('test@example.com');
+		expect(body.subject).toBe('Daily Digest: 1 New Position Posted');
+		expect(body.audience_id).toBe('test_audience_id');
+		expect(body.name).toContain('Daily Digest');
+
+		// Check unsubscribe tags in text and html
+		expect(body.text).toContain('Senior Data Visualization Engineer');
+		expect(body.text).toContain('{{{resend_unsubscribe_url}}}');
+		expect(body.text).not.toContain('{{{RESEND_UNSUBSCRIBE_URL}}}');
+
+		expect(body.html).toContain('Senior Data Visualization Engineer');
+		expect(body.html).toContain('{{{resend_unsubscribe_url}}}');
+		expect(body.html).not.toContain('{{{RESEND_UNSUBSCRIBE_URL}}}');
+
+		// Verify Resend Broadcast send fetch call
+		const [sendUrl, sendOptions] = resendCalls[1];
+		expect(sendUrl).toBe('https://api.resend.com/broadcasts/test_broadcast_123/send');
+		expect(sendOptions.method).toBe('POST');
+		expect(sendOptions.headers).toEqual({
+			Authorization: 'Bearer test_api_key',
+			'Content-Type': 'application/json'
+		});
+
+		vi.unstubAllGlobals();
+		consoleLog.mockRestore();
+	});
+
+	it('throws 500 error if Resend broadcast creation fails', async () => {
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue(new Response('API error', { status: 500 }))
+		);
+
+		await expect(
+			callDigest(
+				digestRequest(),
+				supabaseWithPosts([
+					{
+						id: 1,
+						title: 'A job',
+						description: 'A description',
+						created_at: new Date().toISOString()
+					}
+				])
+			)
+		).rejects.toMatchObject({ status: 500 });
+
+		vi.unstubAllGlobals();
+		consoleError.mockRestore();
+	});
+
+	it('throws 500 error if Resend broadcast send fails', async () => {
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockImplementation((url: string) => {
+				if (typeof url === 'string' && url.endsWith('/send')) {
+					return Promise.resolve(new Response('Send error', { status: 500 }));
+				}
+				return Promise.resolve(
+					new Response(JSON.stringify({ id: 'test_broadcast_id' }), { status: 200 })
+				);
+			})
+		);
+
+		await expect(
+			callDigest(
+				digestRequest(),
+				supabaseWithPosts([
+					{
+						id: 1,
+						title: 'A job',
+						description: 'A description',
+						created_at: new Date().toISOString()
+					}
+				])
+			)
+		).rejects.toMatchObject({ status: 500 });
+
+		vi.unstubAllGlobals();
 		consoleError.mockRestore();
 	});
 });

@@ -97,7 +97,7 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 			`${textBodyHeader}${postsText}` +
 			`Visit ${siteUrl} to see more.\n\n` +
 			`Know someone who'd be a good fit? Forward them this email or share ${siteUrl} — it helps more people find these roles.\n\n` +
-			`To unsubscribe from these emails, click here: {{{RESEND_UNSUBSCRIBE_URL}}}`;
+			`To unsubscribe from these emails, click here: {{{resend_unsubscribe_url}}}`;
 
 		const linkedInPs = `PS: This is a side project I maintain in my spare time — now in its second year. If you find it useful, a like or repost genuinely helps more people discover it. 🙏`;
 
@@ -109,27 +109,50 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 			`<p>Know someone who'd be a good fit? Forward them this email or share ` +
 			`<a href="${siteUrl}">${siteUrl}</a> — it helps more people find these roles.</p>` +
 			`<p style="font-size: 0.8em; color: #666;">` +
-			`To unsubscribe, <a href={{{RESEND_UNSUBSCRIBE_URL}}}>click here</a>.` +
+			`To unsubscribe, <a href="{{{resend_unsubscribe_url}}}">click here</a>.` +
 			`</p>`;
 
-		const broadcast = await resend.broadcasts.create({
-			name: `Daily Digest ${new Date().toLocaleDateString()}`,
-			from: FROM_EMAIL,
-			subject: subject,
-			text: textBody,
-			html: htmlBody,
-			audienceId: RESEND_AUDIENCE_ID
+		const broadcastRes = await fetch('https://api.resend.com/broadcasts', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${RESEND_API_KEY}`,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				name: `Daily Digest ${new Date().toLocaleDateString()}`,
+				from: FROM_EMAIL,
+				subject: subject,
+				text: textBody,
+				html: htmlBody,
+				audience_id: RESEND_AUDIENCE_ID
+			})
 		});
 
-		if (broadcast.error || !broadcast.data) {
-			console.error('Error creating daily digest broadcast:', broadcast.error);
+		if (!broadcastRes.ok) {
+			const errorText = await broadcastRes.text();
+			console.error('Error creating daily digest broadcast:', errorText);
 			throw error(500, 'Error creating daily digest broadcast');
 		}
 
-		const sendResult = await resend.broadcasts.send(broadcast.data.id);
+		const broadcastData = await broadcastRes.json();
+		const broadcastId = broadcastData.id || broadcastData.data?.id;
 
-		if (sendResult.error) {
-			console.error('Error sending daily digest:', sendResult.error);
+		if (!broadcastId) {
+			console.error('Error creating daily digest broadcast: missing broadcast ID', broadcastData);
+			throw error(500, 'Error creating daily digest broadcast');
+		}
+
+		const sendRes = await fetch(`https://api.resend.com/broadcasts/${broadcastId}/send`, {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${RESEND_API_KEY}`,
+				'Content-Type': 'application/json'
+			}
+		});
+
+		if (!sendRes.ok) {
+			const sendErrorText = await sendRes.text();
+			console.error('Error sending daily digest:', sendErrorText);
 			throw error(500, 'Error sending daily digest');
 		}
 
