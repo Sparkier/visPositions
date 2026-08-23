@@ -261,10 +261,7 @@ describe('Daily Digest API', () => {
 
 	it('throws 500 error if Resend broadcast creation fails', async () => {
 		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-		vi.stubGlobal(
-			'fetch',
-			vi.fn().mockResolvedValue(new Response('API error', { status: 500 }))
-		);
+		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('API error', { status: 500 })));
 
 		await expect(
 			callDigest(
