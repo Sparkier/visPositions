@@ -44,10 +44,17 @@ Deno.serve(async () => {
 		});
 
 		const responseBody = await response.text(); // Read the body for logging
-		console.log(`Trigger response status: ${response.status}`);
-		console.log(`Trigger response body: ${responseBody}`);
 
-		// 4. Return a response indicating trigger status
+		if (!response.ok) {
+			console.error(`Digest endpoint failed (${response.status}): ${responseBody}`);
+		} else {
+			console.log(`Trigger response status: ${response.status}`);
+			console.log(`Trigger response body: ${responseBody}`);
+		}
+
+		// 4. Mirror the endpoint's failure in our own status. Returning 200 here
+		// regardless is how a 504 from the digest went unnoticed: the cron run
+		// looked healthy while nothing had been sent.
 		return new Response(
 			JSON.stringify({
 				triggerSuccess: response.ok,
@@ -55,7 +62,7 @@ Deno.serve(async () => {
 				endpointResponse: responseBody
 			}),
 			{
-				status: 200, // The trigger function itself succeeded in making the call
+				status: response.ok ? 200 : 502,
 				headers: { 'Content-Type': 'application/json' }
 			}
 		);

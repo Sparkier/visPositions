@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { POST } from './+server';
+import { env } from '$env/dynamic/private';
 import { getTokenStatus, type TokenStatus } from '$lib/server/linkedin';
 
 // Mock $env/static/private
@@ -152,6 +153,67 @@ describe('Daily Digest API', () => {
 		expect(sendEmail.mock.calls[0][0].text).toContain('has expired');
 
 		consoleSpy.mockRestore();
+	});
+
+	describe('heartbeat', () => {
+		const heartbeatUrl = 'https://hc.example/ping';
+
+		afterEach(() => {
+			delete env.DIGEST_HEARTBEAT_URL;
+			vi.unstubAllGlobals();
+		});
+
+		it('pings after a successful send', async () => {
+			env.DIGEST_HEARTBEAT_URL = heartbeatUrl;
+			const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+			const fetchMock = vi.fn().mockResolvedValue(new Response('ok'));
+			vi.stubGlobal('fetch', fetchMock);
+
+			await callDigest(
+				digestRequest(),
+				supabaseWithPosts([
+					{ id: 1, title: 'A job', description: 'A description', created_at: '2026-09-15' }
+				])
+			);
+
+			expect(fetchMock).toHaveBeenCalledWith(
+				heartbeatUrl,
+				expect.objectContaining({ method: 'POST' })
+			);
+
+			consoleLog.mockRestore();
+		});
+
+		it('pings on a quiet day, so silence always means a real failure', async () => {
+			env.DIGEST_HEARTBEAT_URL = heartbeatUrl;
+			const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+			const fetchMock = vi.fn().mockResolvedValue(new Response('ok'));
+			vi.stubGlobal('fetch', fetchMock);
+
+			await callDigest(digestRequest(), supabaseWithPosts([]));
+
+			expect(fetchMock).toHaveBeenCalledWith(
+				heartbeatUrl,
+				expect.objectContaining({ method: 'POST' })
+			);
+
+			consoleLog.mockRestore();
+		});
+
+		it('does not fail the digest when the monitor is unreachable', async () => {
+			env.DIGEST_HEARTBEAT_URL = heartbeatUrl;
+			const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+			const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+			vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('monitor down')));
+
+			const response = await callDigest(digestRequest(), supabaseWithPosts([]));
+
+			expect(response.status).toBe(200);
+			expect(await response.json()).toEqual({ message: 'No new posts to send.' });
+
+			consoleLog.mockRestore();
+			consoleError.mockRestore();
+		});
 	});
 
 	it('warns immediately when LinkedIn rejects the token', async () => {

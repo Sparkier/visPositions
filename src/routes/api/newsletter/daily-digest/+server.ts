@@ -6,6 +6,9 @@ import {
 	RESEND_API_KEY,
 	RESEND_AUDIENCE_ID
 } from '$env/static/private';
+// Read dynamically so the heartbeat stays optional — an unset URL simply
+// disables the ping rather than breaking the build.
+import { env } from '$env/dynamic/private';
 import { json, error } from '@sveltejs/kit';
 import { Resend } from 'resend';
 import { escapeHtml } from '$lib/utils';
@@ -13,6 +16,33 @@ import { getAccessToken, getReconnectUrl, getTokenStatus } from '$lib/server/lin
 import type { RequestHandler } from './$types';
 
 const resend = new Resend(RESEND_API_KEY);
+
+/**
+ * This route makes up to six sequential API calls. Vercel's default of 10s is
+ * not enough: a single `broadcasts.create` has been observed taking ~17s.
+ */
+export const config = {
+	maxDuration: 60
+};
+
+/** Ceiling for any one outbound call, so no single hop can eat the budget. */
+const OUTBOUND_TIMEOUT_MS = 15_000;
+
+/**
+ * Dead-man's-switch ping. The monitor alerts when a run stops checking in,
+ * which is the only signal that also catches the cron never firing at all.
+ * Never allowed to fail or hang the digest it is reporting on.
+ */
+async function pingHeartbeat(): Promise<void> {
+	const url = env.DIGEST_HEARTBEAT_URL;
+	if (!url) return;
+
+	try {
+		await fetch(url, { method: 'POST', signal: AbortSignal.timeout(5000) });
+	} catch (err) {
+		console.error('Could not ping the digest heartbeat:', err);
+	}
+}
 
 /**
  * Nudges the admin to reconnect. LinkedIn only grants refresh tokens to
@@ -41,8 +71,31 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
 
-	// Checked before the no-new-posts return below, so quiet days still warn.
-	const tokenStatus = await getTokenStatus();
+	// Breadcrumbs so a future slow run names its own culprit in the Vercel logs,
+	// instead of leaving only an opaque FUNCTION_INVOCATION_TIMEOUT.
+	const startedAt = Date.now();
+	const mark = (step: string) => console.log(`[digest] ${step} at +${Date.now() - startedAt}ms`);
+
+	// Fetch posts vetted in the last 24 hours
+	const twentyFourHoursAgo = new Date();
+	twentyFourHoursAgo.setDate(twentyFourHoursAgo.getDate() - 1);
+	const twentyFourHoursAgoISO = twentyFourHoursAgo.toISOString();
+
+	// The token read and the posts query touch different tables and neither
+	// depends on the other, so there is nothing to gain from running them back
+	// to back.
+	const [tokenStatus, { data: posts, error: postsError }] = await Promise.all([
+		getTokenStatus(),
+		supabase
+			.from('post')
+			.select('id, title, description, created_at')
+			.eq('vetted', true)
+			.gte('vetted_at', twentyFourHoursAgoISO)
+			.order('vetted_at', { ascending: false })
+	]);
+	mark('token status and posts read');
+
+	// Warned before the no-new-posts return below, so quiet days still warn.
 	if (tokenStatus.needsRenewal) {
 		await sendTokenWarning(
 			tokenStatus.expired
@@ -52,17 +105,6 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 	}
 
 	try {
-		// Fetch posts vetted in the last 24 hours
-		const twentyFourHoursAgo = new Date();
-		twentyFourHoursAgo.setDate(twentyFourHoursAgo.getDate() - 1);
-		const twentyFourHoursAgoISO = twentyFourHoursAgo.toISOString();
-		const { data: posts, error: postsError } = await supabase
-			.from('post')
-			.select('id, title, description, created_at')
-			.eq('vetted', true)
-			.gte('vetted_at', twentyFourHoursAgoISO)
-			.order('vetted_at', { ascending: false });
-
 		if (postsError) {
 			console.error('Error fetching vetted posts:', postsError);
 			throw error(500, 'Error fetching posts');
@@ -70,6 +112,9 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 
 		if (!posts || posts.length === 0) {
 			console.log('No newly vetted posts found in the last 24 hours.');
+			// A quiet day is still a healthy run — ping, or the monitor would
+			// alert every time there is simply nothing to send.
+			await pingHeartbeat();
 			return json({ message: 'No new posts to send.' }, { status: 200 });
 		}
 
@@ -109,7 +154,7 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 			`<p>Know someone who'd be a good fit? Forward them this email or share ` +
 			`<a href="${siteUrl}">${siteUrl}</a> — it helps more people find these roles.</p>` +
 			`<p style="font-size: 0.8em; color: #666;">` +
-			`To unsubscribe, <a href={{{RESEND_UNSUBSCRIBE_URL}}}>click here</a>.` +
+			`To unsubscribe, <a href="{{{RESEND_UNSUBSCRIBE_URL}}}">click here</a>.` +
 			`</p>`;
 
 		const broadcast = await resend.broadcasts.create({
@@ -121,15 +166,23 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 			audienceId: RESEND_AUDIENCE_ID
 		});
 
+		mark('broadcast created');
+
 		if (broadcast.error || !broadcast.data) {
 			console.error('Error creating daily digest broadcast:', broadcast.error);
 			throw error(500, 'Error creating daily digest broadcast');
 		}
 
 		const sendResult = await resend.broadcasts.send(broadcast.data.id);
+		mark('broadcast sent');
 
 		if (sendResult.error) {
-			console.error('Error sending daily digest:', sendResult.error);
+			// The draft survives in Resend and can be sent by hand from the
+			// dashboard — see the runbook note in the README.
+			console.error(
+				`Error sending daily digest (draft ${broadcast.data.id} left in Resend):`,
+				sendResult.error
+			);
 			throw error(500, 'Error sending daily digest');
 		}
 
@@ -139,6 +192,9 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 			try {
 				const linkedinRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
 					method: 'POST',
+					// Capped because this is the last step: without a ceiling a
+					// hanging LinkedIn takes the whole run down with it.
+					signal: AbortSignal.timeout(OUTBOUND_TIMEOUT_MS),
 					headers: {
 						'Content-Type': 'application/json',
 						Authorization: `Bearer ${linkedinToken}`
@@ -183,6 +239,11 @@ export const POST: RequestHandler = async ({ locals: { supabase }, request }) =>
 		} else {
 			console.log('LinkedIn API credentials not configured. Skipping post to LinkedIn.');
 		}
+
+		mark('done');
+		// Deliberately after the email send and not gated on the LinkedIn result:
+		// the digest reaching subscribers is what this monitor is watching for.
+		await pingHeartbeat();
 
 		console.log(`Daily digest process completed.`);
 		return json({
