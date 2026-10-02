@@ -14,6 +14,7 @@ import { Resend } from 'resend';
 import { escapeHtml } from '$lib/utils';
 import { getAccessToken, getReconnectUrl, getTokenStatus } from '$lib/server/linkedin';
 import type { RequestHandler } from './$types';
+import { timingSafeStringEqual } from '$lib/server/auth';
 
 const resend = new Resend(RESEND_API_KEY);
 
@@ -67,7 +68,7 @@ async function sendTokenWarning(reason: string) {
 
 export const POST: RequestHandler = async ({ locals: { supabase }, request }) => {
 	const authHeader = request.headers.get('Authorization');
-	if (authHeader !== `Bearer ${DAILY_DIGEST_SECRET_KEY}`) {
+	if (!timingSafeStringEqual(`Bearer ${DAILY_DIGEST_SECRET_KEY}`, authHeader)) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
 
